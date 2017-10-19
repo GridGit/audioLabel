@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>audio</title>
+  <link rel="stylesheet" type="text/css" href="./resources/main.css">
+</head>
+<body>
+  <div class="wrap">
+  	<div class="canvas_wrap">
+  		<canvas id="audio_bg" class="audio_bg" width="800" height="200"></canvas>
+  		<canvas id="audio_rect" class="audio_rect" width="800" height="200"></canvas>
+  	</div>
+  	<div class="audio_wrap">
+	  	<div id="control_bar" class="audio_operate">
+        <div><audio id="audio" controls class="audio"></audio></div>
+        <div id='dragDiv' style="display: none;">
+            <label>操作:</label><input class="checkbox" type='checkbox' id='editCheckbox'/>
+        </div>
+	  	  <div><input type="file" class="file" name="file" id="file_list" multiple="true"></div>
+        <div class="operate_btn" style="display: none;">
+           <div id="play" >播放</div>
+           <div id="pause" >暂停</div>
+           <div id="restart" >重播</div>
+        </div>	  	 
+	  	</div>
+  	</div>
+  	<div class="judge_wrap">
+  		<div class="judge_wrap_left">
+  			<div class="judge_wrap_time" ><span id="judge_start_time">00:00:00:00</span>-<span id="judge_end_time">00:00:00:00</span></div>
+  			<div class="judge_wrap_button">
+          <div class="judge_play" id="judge_play">播放</div>
+        </div>
+  		</div>
+  		<div class="judge_wrap_right" id="judge_input_area">
+  			<div class="judge_wrap_type">
+  				<div class="judge_wrap_type_item judge_wrap_type_a judge_wrap_type_selected" id="judge_type_a">A</div>
+  				<div class="judge_wrap_type_item judge_wrap_type_b" id="judge_type_b">B</div>
+  				<div class="judge_wrap_type_item judge_wrap_type_ab" id="judge_type_ab">AB</div>
+  			</div>
+  			<div class="judge_wrap_text" id="judge_text_a" >
+  				<div class="judge_text_single"><label>A:</label><input id ='text_a'  type="text" name="" placeholder="输入A说的话"></div>
+  			</div>
+  			<div class="judge_wrap_text" id="judge_text_b" style="display: none;">
+  				<div class="judge_text_single"><label>B:</label><input id = 'text_b' type="text" name="" placeholder="输入B说的话"></div>
+  			</div>
+  			<div class="judge_wrap_text" id="judge_text_ab" style="display: none;">
+  				<div class="judge_wrap_text_item"><label>A:</label><input id="text_ab_a" type="text" name="" placeholder="输入A说的话"></div>
+  				<div class="judge_wrap_text_item"><label>B:</label><input id='text_ab_b' type="text" name="" placeholder="输入B说的话"></div>
+  			</div>
+  			<div class="judge_wrap_submit">
+  				<div class="submit_delete" id="submit_delete">删除</div>
+  				<div class="submit_save" id="submit_save">保存</div>
+          <div class="submit_download" id="submit_download">提交</div>
+  			</div>
+  		</div>
+  	</div>
+  	<div>
+  		<ul class="result_list">
+  		</ul>
+  	</div>
+  </div>
+  <script type="text/template" data-template='voice_single_result'>
+  	 <li class="result_single">
+     <div class="result_time">
+       <p class="start_time">{{startTime}}</p>--<p>{{endTime}}</p>
+     </div><div class="result_text">
+       <p class="result_type">{{type}}</p><p class="result_content">{{context}}</p>
+     </div>
+  	 </li>
+  </script>
+  <script type="text/template" data-template='voice_double_result'>
+     <li class="result_double">
+       <div class="result_double_time">
+         <p class="start_time">{{startTime}}</p>--<p>{{endTime}}</p>
+       </div><div class="result_double_text">
+         <div ><p class="result_type">{{typeA}}:</p><p class="result_content">{{contextA}}</p></div>
+         <div><p class='result_type'>{{typeB}}:</p><p class="result_content">{{contextB}}</p></div>
+       </div>
+     </li>
+  </script>
+  <script type="text/javascript" src='./resources/jquery.min.js'></script>
+  <script type="text/javascript" src='./resources/LMCanvas.js'> </script>
+  <script type="text/javascript" src='./resources/main.js'></script>
+</body>
+</html>

@@ -1,0 +1,306 @@
+
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>波形图</title>
+<style>
+body{margin:0;padding:0;}
+.canvas{margin:20px; background:#ddd;}
+#ld_idx{font-size: 15px; margin: 20px;}
+#canvas_content{float: left;}
+#div1{float: left; width: 200px; height: 500px; margin: 25px}
+#div2{float: left; width: 200px; height: 500px; margin: 25px}
+.common_button{width: 150px; height: 75px; font-size: 25px; margin: 25px;}
+#prev{background-color:#FAFAD2;}
+#next{background-color:#FFA500;}
+#save{background-color:#FF4500;}
+#hide{background-color:#C0FF3E;}
+#reset_point{display: none; background-color:#4055EE;}
+#load_point{background-color:#AA55EE;}
+#file_list{clear: both; color:#87CEFF; font-size: 15px; width: 200px; height: 25px; margin-left: 50px;}
+</style>
+</head>
+
+<body>
+<div id="canvas_content">
+    <canvas id="canvas" class="canvas" width="800" height="600" ></canvas>
+</div>
+
+<div id="div2">
+    <button type="button" class="common_button" id="prev">上一张</button>
+    <button type="button" class="common_button" id="next">下一张</button>
+    <input type='file' multiple id="file_list"\>
+</div>
+
+<script>
+~function(){
+    // global variables
+    var canvas = document.getElementById("canvas"),
+        graphs = [],
+        landmarks = [],
+        file_idx = 0,
+        bg_img,
+        img_src = "",
+        fileInput = document.getElementById("file_list"),
+        prev_but = document.getElementById("prev"),
+        next_but = document.getElementById("next"),
+        ld_idx_text = document.getElementById("ld_idx"),
+        current_point_index = 0;
+
+    DragImage = function(src, canvas, landmarks) {
+        this.img = new Image();
+        this.img.src = src;
+        this.canvas = canvas;
+        this.context = canvas.getContext("2d");
+        var that = this;
+        this.img.onload = function() {
+            that.x = 0;
+            that.y = 0;
+            that.width = that.img.width;
+            that.height = that.img.height;
+            that.paint();
+        };
+        this.landmarks = landmarks;
+    }
+
+    DragImage.prototype = {
+        paint: function(hide_state=true, hide_line=true){
+            console.log("paint");
+            this.context.drawImage(this.img, this.x, this.y, this.width, this.height);
+            if (!hide_line) {
+                this.draw_lines();
+            }
+            for(var i = 0 ; i < this.landmarks.length ; ++i){
+                if (hide_state && !key_pts.has(i)) {
+                    continue;
+                }
+                this.landmarks[i].paint();
+            }
+        },
+        calc_sub_points: function(start_point, end_point, count=end_point-start_point, start_index=start_point+1) {
+            var ld = this.landmarks;
+            var dx = (ld[end_point].x - ld[start_point].x) / count;
+            var dy = (ld[end_point].y - ld[start_point].y) / count;
+            console.log("start: " + ld[start_point].x + ", " + ld[start_point].y);
+            console.log("dx: " + dx + ", dy: " + dy);
+            for (var i = 0; i < count - 1; i++) {
+                ld[start_index+i].x = ld[start_point].x + dx * (i + 1);
+                ld[start_index+i].y = ld[start_point].y + dy * (i + 1);
+            }
+        },
+        toggle_current_point_visiblility: function(index) {
+            this.landmarks[index].visibility = !this.landmarks[index].visibility;
+        },
+        isMouseInImage: function(mouse){
+            var out = mouse.x < this.x || mouse.y < this.y ||
+                      mouse.x >= this.x + this.width || mouse.y >= this.y + this.height;
+            var on_ld = false;
+            for(var i = 0 ; i < this.landmarks.length ; ++i){
+                if (this.landmarks[i].isMouseInGraph(mouse)) {
+                    on_ld = true;
+                    break;
+                }
+            }
+            return (!out) && (!on_ld);
+        },
+        erase: function() {
+            this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        },
+        resize: function(mouse, delta) {
+            var ratio = 1 + delta / 15.0;
+            ratio = ratio > 0 ? ratio : 1;
+            cx = mouse.x - this.x;
+            cy = mouse.y - this.y;
+            this.x = mouse.x - cx * ratio;
+            this.y = mouse.y - cy * ratio;
+            this.width = this.width * ratio;
+            this.height = this.height * ratio;
+            for(var i = 0 ; i < this.landmarks.length ; ++i){
+                this.landmarks[i].resize(mouse, delta);
+            }
+        },
+        get_landmark_coordinates_str: function() {
+            var ret = ""
+            for (var i = 0; i < this.landmarks.length; ++i) {
+                var x = (this.landmarks[i].x - this.x) / (this.width) * this.img.width;
+                var y = (this.landmarks[i].y - this.y) / (this.height) * this.img.height;
+                ret += String(x) + " " + String(y) + " ";
+            }
+            return ret;
+        },
+        get_landmark_visibility_str: function() {
+            var ret = ""
+            for (var i = 0; i < this.landmarks.length; ++i) {
+                ret += this.landmarks[i].visibility ? '1 ' : '0 ';
+            }
+            return ret;
+        },
+        draw_lines: function() {
+            this._draw_lines(0, 32, "#00FFFF");
+            this._draw_lines(33, 45, "#FF8C69");
+            this._draw_lines(46, 57, "#FF8C69");
+            this._draw_lines(58, 70, "#FF8C69");
+            this._draw_lines(71, 82, "#FF8C69");
+            this._draw_lines(96, 107, "#C1CDCD");
+            this._draw_lines(108, 117, "#C1CDCD");
+            this._draw_lines(120, 131, "#C1CDCD");
+            this._draw_lines(132, 141, "#C1CDCD");
+            this._draw_lines(154, 168, "#55BB69");
+            this._draw_lines(169, 183, "#55BB69");
+            this._draw_lines(184, 198, "#55BB69");
+            this._draw_lines(199, 213, "#55BB69");
+        },
+        _draw_lines: function(start, end, color) {
+            this.context.beginPath();
+            var ld = this.landmarks;
+            this.context.moveTo(ld[start].x, ld[start].y);
+            for (var i = start + 1; i < end + 1; ++i) {
+                this.context.lineTo(ld[i].x, ld[i].y);
+            }
+            this.context.strokeStyle = color;
+            this.context.stroke();
+        },
+        draw_key_pts: function() {
+            this.context.drawImage(this.img, this.x, this.y, this.width, this.height);
+            for(var i = 0 ; i < this.landmarks.length ; ++i){
+                this.landmarks[i].paint();
+            }
+        },
+        draw_other_pts: function() {
+            this.context.drawImage(this.img, this.x, this.y, this.width, this.height);
+            for(var i = 0 ; i < this.landmarks.length ; ++i){
+                this.landmarks[i].paint();
+            }
+            if (!hide_line) {
+                this.draw_lines();
+            }
+        }
+    }
+
+    WavFile = function(filePath) {
+        this.path = filePath;
+        this.rawBinString;
+        this.shortArray;
+        this.loaded = false;
+        this.loadCallback = null;
+        this.frequency;
+        this.dataLength;
+        this.time;
+        this.load();
+    }
+
+    WavFile.prototype = {
+        load: function() {
+            var reader = new FileReader();
+            var that = this;
+            reader.onload = function(e) {
+                let head = 78;
+                that.rawBinString = e.target.result;
+                that.frequency = that.char2long(that.rawBinString, 24);
+                that.dataLength = that.char2long(that.rawBinString, 74) / 2;
+                that.shortArray = that.byteString2shortArray(that.rawBinString.slice(head));
+                that.time = that.dataLength / that.frequency;
+                if (that.loadCallback != null) {
+                    that.loadCallback();
+                }
+                that.loaded = true;
+            }
+            reader.readAsBinaryString(this.path);
+        },
+        onload: function(callback) {
+            this.loadCallback = callback;
+            if (this.loaded) {
+                callback();
+            }
+        },
+        getFrequency: function() {
+            return this.frequency;
+        },
+        getTime: function() {
+            return this.time;
+        },
+        getData: function() {
+            return this.shortArray;
+        },
+        char2short: function(c1, c2) {
+            let s = c2 * 256 + c1;
+            return s > 32767 ? s - 65536 : s;
+        },
+        char2long: function(byteString, startChar) {
+            return byteString.charCodeAt(startChar+3) * 16777216 + byteString.charCodeAt(startChar+2) * 65536
+                    + byteString.charCodeAt(startChar+1) * 256 + byteString.charCodeAt(startChar);
+        },
+        byteString2shortArray: function(bs) {
+            let len = bs.length / 2;
+            sa = new Array(len);
+            for (var i = 0; i < len; i++) {
+                sa[i] = this.char2short(bs.charCodeAt(i*2), bs.charCodeAt(i*2+1));
+            }
+            return sa;
+        }
+    }
+
+    function loadData(order=1) {
+        var fileName = fileInput.files[file_idx].name;
+        var len = fileName.length;
+        while (fileName.slice(len - 3, len) != 'wav') {
+            if (order == 1) {
+                ++file_idx;
+            } else {
+                --file_idx;
+            }
+            fileName = fileInput.files[file_idx].name;
+            len = fileName.length;
+        }
+
+        var wf = new WavFile(fileInput.files[file_idx]);
+        wf.onload(function() {
+            console.log('wf.onload');
+            let data = wf.getData();
+            console.dir(data);
+            console.log(data.length);
+            console.log(data[19]);
+            let time = wf.getTime();
+            console.log(time);
+        });
+    }
+
+    fileInput.addEventListener('change', function () {
+        file_idx = 0;
+        loadData();
+    });
+
+    prev_but.onclick = function(e) {
+        if (!fileInput.value) {
+            alert('没有选择标注文件');
+            return;
+        }
+        if (file_idx <= 0) {
+            alert('已经是第一张');
+            return;
+        } else {
+            --file_idx;
+            loadData(0);
+        }
+    }
+
+    next_but.onclick = function(e) {
+        if (!fileInput.value) {
+            alert('没有选择标注文件');
+            return;
+        }
+        if (file_idx >= fileInput.files.length-1) {
+            alert('已经是最后一张');
+            return;
+        } else {
+            ++file_idx;
+            loadData();
+        }
+        // console.log(fileInput.files[file_idx]);
+    }
+}()
+</script>
+</body>
+</html>

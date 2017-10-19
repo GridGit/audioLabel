@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>mousedown</title>
+	<style type="text/css">
+		.demo{
+			width: 400px;
+			height: 400px;
+			background-color: orange;
+		}
+	</style>
+</head>
+<body>
+	<div class="demo" id="demo">
+		
+	</div>
+	<script type="text/javascript" src='http://cdn.static.runoob.com/libs/jquery/1.10.2/jquery.min.js'></script>
+	<script type="text/javascript">
+		$(document).ready(function(){
+        var down=null;
+        var mouse=false;
+        var demo = document.getElementById('demo');
+        // demo.addEventListener('mousedown', function(){
+        // 	clearTimeout(down);
+        //     down=setTimeout(function(){
+        //         mouse=true;
+        //         console.log('鼠标按下了');
+        //     },200);
+        // })
+        // demo.addEventListener('dblclick', function(){
+        // 	clearTimeout(down);//要清除down事件，否则在执行了click事件之后，会接着执行mousedown事件
+        //     if(!mouse){
+        //         console.log('被点击了');
+        //     }else{
+        //         mouse=false;
+        //     }
+        // })
+        demo.addEventListener('mousedown',function(){
+        	console.log('mousedown')
+        })
+        demo.addEventListener('mouseup',function(){
+        	console.log('mouseup')
+        })
+        demo.addEventListener('click',function(){
+        	console.log('click')
+        })
+        demo.addEventListener('dblclick',function(){
+        	console.log('dblclick')
+        })
+        // $('.demo').mousedown(function(){
+        //     clearTimeout(down);
+        //     down=setTimeout(function(){
+        //         mouse=true;
+        //         console.log('鼠标按下了');
+        //     },200);
+        // });
+        // $('.demo').click(function(){
+        //     clearTimeout(down);//要清除down事件，否则在执行了click事件之后，会接着执行mousedown事件
+        //     if(!mouse){
+        //         console.log('被点击了');
+        //     }else{
+        //         mouse=false;
+        //     }
+        // });
+        var arr = [{
+        	x: 1,
+        	y: 2
+        },{
+        	x: 2,
+        	y: 3
+        },{
+        	x: 3,
+        	y: 4
+        }]
+        var obj = {
+        	x: 1,
+        	y: 3
+        }
+        for(var i = 0; i < arr.length; i++){
+        	if(arr[i].x == obj.x){
+        		console.log(i) 
+        	}
+        }
+        arr.forEach(function(item,index){
+        	console.dir(item);
+        	if(item.x == obj.x){
+        		console.log(index);
+        	}else{
+        		console.log('not')
+        	}
+        	
+        })
+        function getIndex(arr,obj){
+        	arr.forEach(function(item, index){
+        		if(item.x == obj.x){
+        			return index;
+        		}
+        	})
+        }
+   		
+   		var loc = getIndex(arr, obj);
+   		console.log(loc)
+   		var arr1 = [];
+   		if(arr1.length != 0){
+   			console.log('yes')
+   		}else{
+   			console.log('no')
+   		} 
+   		if(2 > 1){
+   			if(true) return;
+   			console.log('sss')
+   		}   
+    });
+	</script>
+</body>
+</html>

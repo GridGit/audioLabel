@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>audio</title>
+  <style type="text/css">
+  	*{
+  	  padding: 0;
+  	  margin: 0;
+  	}
+    .wrap{
+      width: 800px;
+      margin: 0 auto;
+      margin-top: 50px;
+    }
+    .canvas{
+      display: block;
+      border: 1px solid gray;
+    }
+    .audio{
+      display: none;
+      border: 1px solid orange;
+    }
+    .sound_type{
+      margin-left: 20px;
+      cursor: pointer;
+    }
+    .canvas_wrap{
+      position: relative;
+      overflow-x: scroll;
+      /*height: 152px;*/
+    }
+    .audio_wave{
+      /*position: absolute;*/
+      /*z-index: 9;*/
+      background-color: rgb(0,0,0);
+      border: 1px solid gray;
+    }
+    .audio_wrap{
+      width: 100%;
+    }
+    .audio_operate{
+      width: 100%;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+    .audio_operate_right{
+      float: right;
+    }
+    .audio_operate_right div{
+      display: inline-block;
+      /*border: 1px solid gray;*/
+      cursor: pointer;
+    }
+    .judge_wrap{
+      width: 100%;
+      border: 1px solid gray;
+      position: relative;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+      box-shadow: 2px 2px 2px gray;
+    }
+    .judge_wrap_left{
+      width: 220px;
+      border-right: 1px solid gray;
+    }
+    .judge_wrap_time{
+      width: 100%;
+      height: 30px;
+      line-height: 30px;
+      color: blue;
+      text-align: center;
+    }
+    .judge_wrap_button{
+	  width: 100%;
+	  height: 190px;
+	  text-align: center;
+    }
+    .judge_wrap_right{
+      width: calc(100% - 221px);
+      height: 220px;
+      position: absolute;
+      top: 0px;
+      left: 221px;
+    }
+    .judge_wrap_type{
+      background-color: rgb(221,221,221);
+      height: 55px;
+      line-height: 55px;
+    }
+    .judge_wrap_type_item{
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      line-height: 40px;
+      margin-left: 20px;
+      border-radius: 20px;
+      text-align: center;
+      background-color: #fff;
+	  cursor: pointer;
+    }
+    .judge_wrap_type_selected{
+      background-color: rgb(78,174,73);
+      color: #fff;
+    }
+    .judge_wrap_type span{
+      display: inline-block;
+      height: 40px;
+      line-height: 40px;
+      border-left: 1px solid gray;
+    }
+    .judge_wrap_text{
+      height: 110px;
+    }
+    .judge_wrap_text_item{
+      height: 54px;
+      border-bottom: 1px solid rgb(221,221,221);
+    }
+    .judge_wrap_text_item label{
+      display: inline-block;
+      height: 54px;
+      width: 54px;
+      line-height: 54px;
+      text-align: center;
+      font-size: 18px;
+    }
+    .judge_wrap_text_item input{
+      display: inline-block;
+      width: calc(100% - 54px);
+      height: 50px;
+      line-height: 50px;
+      font-size: 18px;
+      outline: none;
+      border-radius: 0;
+      border: none;
+    }
+    .judge_wrap_submit{
+      height: 55px;
+      line-height: 55px;
+      background-color: rgb(221,221,221);
+    }
+    .judge_wrap_submit div{
+      display: inline-block;
+      width: 55px;
+      height: 35px;
+      line-height: 35px;
+      border: 1px solid #fff;
+      border-radius: 5px;
+      margin-left: 20px;
+      background-color: #fff;
+	  text-align: center;
+      cursor: pointer;
+    }
+    .judge_text_single{
+      width: 100%;
+      height: 110px;
+      line-height: 110px;
+    }
+    .judge_text_single label{
+      display: inline-block;
+      width: 54px;
+      height: 110px;
+      line-height: 110px;
+      text-align: center;
+      font-size: 18px;
+    }
+    .judge_text_single input{
+      display: inline-block;
+      width: calc(100% - 54px);
+      height: 110px;
+      line-height: 100px;
+      font-size: 18px;
+      outline: none;
+      border-radius: 0;
+      border: none;
+    }
+    .info_wrap{
+      position: relative;
+      width: 100%;
+      border: 1px solid gray;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+      box-shadow: 2px 2px 2px gray;
+    }
+    .info_wrap_left{
+      height: 165px;
+      width: 220px;
+      border-right: 1px solid gray;
+    }
+    .single_time{
+      width: 220px;
+      height: 54px;
+      line-height: 55px;
+      border-bottom: 1px solid gray;
+      text-align: center;
+    }
+    .single_time span{
+      display: inline-block;
+      text-align: center;
+
+    }
+	.double_time{
+	  width: 220px;
+	  height: 110px;
+	  line-height: 110px;
+	  text-align: center;
+	}
+	.double_time span {
+	  display: inline-block;
+	  text-align: center;
+	}
+	.info_wrap_right{
+      position: absolute;
+      width: calc(100% - 221px);
+      height: 165px;
+      top: 0px;
+      left: 221px;
+      /*background-color: orange*/
+	}
+	.info_text_single{
+	  width: 100%;
+	  height: 54px;
+	  line-height: 54px;
+	  border-bottom: 1px solid gray;
+	  /*background-color: green;*/
+	}
+	.info_wrap_right span{
+	  display: inline-block;
+	  margin-left: 20px;
+	  margin-right: 10px;
+	  font-size: 18px;
+	}
+	.info_wrap_right p{
+	  display: inline-block;
+      font-size: 18px;
+	}
+	.info_text_top{
+	  width: 100%;
+	  height: 54px;
+	  line-height: 54px;
+	  border-bottom: 1px solid gray;
+	}
+	.info_text_bottom{
+	  width: 100%;
+	  height: 55px;
+	  line-height: 55px;
+	}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+  	<div class="canvas_wrap">
+  		<canvas id="audio_bg" class="audio_wave" width="800" height="150"></canvas>
+  		<canvas id="audio_rect" class="audio_wave" width="800" height="150"></canvas>
+  		<canvas id="audio_wave" class="audio_wave" width="800" height="150"></canvas>
+  	</div>
+  	<div id='dragDiv'>
+      Edit: <input type='checkbox' id='editCheckbox'/>
+    </div>
+  	<div id="audio_wrap">
+  	  <audio id="audio" controls class="audio" src="1785.wav" ></audio>
+  	  <div class="audio_operate">
+  	  	<input type="range" name="process" value="50" min="0" max="100"><label >1 : 1</label>
+  	  	<div class="audio_operate_right">
+  	  	  <div><input type="file" name="file" id="file_list" multiple="true"></div>
+  	  	  <div id="play">播放</div>
+  	      <div id="pause">暂停</div>
+  	      <div id="restart">重播</div>
+  	  	</div>
+  	  </div>
+  	</div>
+  	<div class="judge_wrap">
+  		<div class="judge_wrap_left">
+  			<div class="judge_wrap_time"><span>00:00:00:01</span>-<span>00:00:00:05</span></div>
+  			<div class="judge_wrap_button"><div>播放</div></div>
+  		</div>
+  		<div class="judge_wrap_right">
+  			<div class="judge_wrap_type">
+  				<div class="judge_wrap_type_item judge_wrap_type_a" id="judge_type_a">A</div>
+  				<div class="judge_wrap_type_item judge_wrap_type_b" id="judge_type_b">B</div>
+  				<div class="judge_wrap_type_item judge_wrap_type_ab" id="judge_type_ab">AB</div>
+  			</div>
+  			<div class="judge_wrap_text" id="judge_text_a" >
+  				<div class="judge_text_single"><label>A</label><input type="text" name="" placeholder="输入A说的话"></div>
+  			</div>
+  			<div class="judge_wrap_text" id="judge_text_b" style="display: none;">
+  				<div class="judge_text_single"><label>B</label><input type="text" name="" placeholder="输入B说的话"></div>
+  			</div>
+  			<div class="judge_wrap_text" id="judge_text_ab" style="display: none;">
+  				<div class="judge_wrap_text_item"><label>A</label><input type="text" name="" placeholder="输入A说的话"></div>
+  				<div class="judge_wrap_text_item"><label>B</label><input type="text" name="" placeholder="输入B说的话"></div>
+  			</div>
+  			<div class="judge_wrap_submit">
+  				<div class="submit_delete" id="submit_delete">删除</div>
+  				<div class="submit_save" id="submit_save">保存</div>
+  			</div>
+  		</div>
+  	</div>
+  	<div class="info_wrap">
+  		<div class="info_wrap_left">
+  			<div class="single_time">
+  				<span id="time_start" class="time_start">00:00:00:01</span>-<span id="time_end" class="time_end">00:00:00:05</span>
+  			</div>
+  			<div class="double_time">
+  				<span id="time_start" class="time_start">00:00:00:06</span>-<span id="time_end" class="time_end">00:00:00:15</span>
+  			</div>
+  		</div>
+  		<div class="info_wrap_right">
+  			<div class="info_text_single">
+  			  <span>A</span><p class="">text</p>
+  			</div>
+  			<div class="info_text_double">
+  				<div class="info_text_top"><span>A</span><p>text</p></div>
+  				<div class="info_text_bottom"><span>B</span><p>text</p></div>
+  			</div>
+  		</div>
+  	</div>
+  	<div>
+  		<ul class="result_class" >
+  			
+  		</ul>
+  	</div>
+  </div>
+  <script type="text/template" data-template='voice_resule'>
+  	 <li>
+  	 	<
+  	 </li>
+  </script>
+  <script type="text/javascript" src='http://libs.baidu.com/jquery/2.1.1/jquery.min.js'></script>
+  <script type="text/javascript" src='./polygon.js'></script>
+  <script type="text/javascript" src='./LMCanvas.js'> </script>
+  <script type="text/javascript">
+    // select() ==>  document.getElementById()
+    var audio = select('audio');
+  	var canvas = select('canvas');
+  	var draw_rect = select('draw_rect');
+  	var play = select('play');
+  	var pause = select('pause');
+  	var file_input = select('file_list');
+  	// var setTime = select('setTime');
+  	
+  	var editCheckbox = select('editCheckbox');
+
+  	// canvas
+  	var audio_wave = select('audio_wave');
+  	var audio_bg = select('audio_bg');
+  	var audio_rect = select('audio_rect');
+
+  	// canvas context
+  	var context = audio_rect.getContext('2d');
+
+  	// a b and ab button
+    var judge_type_a = select('judge_type_a');
+    var judge_type_b = select('judge_type_b');
+    var judge_wrap_type_ab = select('judge_wrap_type_ab');
+
+    // a b and ab panel
+    var judge_text_a = select('judge_text_a');
+    var judge_text_b = select('judge_text_b');
+    var judge_text_ab = select('judge_text_ab');
+
+    var submit_save = select('submit_save');
+    var submit_delete = select('submit_delete')
+
+  	var draw_state = true;
+  	var drawing = false;
+  	var file_idx = 0;
+  	// 是否编辑
+  	var editing = false;
+  	// 多边形列表
+  	var polygons = [];
+  	// 绘图表面数据
+  	var surfaceData;
+    // 鼠标位置坐标
+    var mousedown = {};
+    // 鼠标移动最后坐标
+    var mousemovePosition = {};
+    // 橡皮框
+    var rubberbandRect = {};
+    // 正方形dragging 
+    var rectDrag = false;
+
+    // var dragging = false;
+    var draggingStartX;
+    var draggingStartY;
+    // 多边形变数
+    var sides = 8;
+    // 多边形角度
+    var startAngle = 0;
+ 	// 指示线
+    var guidewires = true;
+    // 在矩形内
+    var isInPolygons = false;
+
+    var voice_data = {
+    	startTime: 0,
+    	endTime: 0,
+    	text:{
+    		a: '',
+    		b: '',
+    	}
+    };
+
+    // Rubberbands
+    // 橡皮框属性
+    function updateRubberbandRectangle(loc) {
+	   rubberbandRect.width  = Math.abs(loc.x - mousedown.x);
+	   rubberbandRect.height = Math.abs(loc.y - mousedown.y);
+
+	   if(loc.x > mousedown.x){
+	       rubberbandRect.left = mousedown.x;
+	   }else{
+	   	   rubberbandRect.left = loc.x;
+	   }
+	   if(loc.y > mousedown.y){
+	   	   rubberbandRect.top = mousedown.y;
+	   }else{
+	   	   rubberbandRect.top = loc.y
+	   }
+	} 
+	// 绘制橡皮框
+	function drawRubberbandShape(loc) {
+	   if(mousedown.x == loc.x) return;
+	   if(rectDrag){
+	   		var rect = new DrawRect(mousedown.x, mousedown.y, loc.x, audio_rect.height, audio_rect);
+	  		drawRect(rect);
+	   }else{
+	   		if(Math.abs(mousedown.x - loc.x) < 10) return;
+	   		var rect = new DrawRect(mousedown.x, mousedown.y, loc.x, audio_rect.height, audio_rect);
+	  		drawRect(rect);
+	   }	  
+	   
+
+	   if(!rectDrag){
+	   	 if(polygons.length == 0){
+	   	 	polygons.push(rect);
+	   	 	return;
+	   	 }else if(polygons.length == 1){
+	   	 	if(rect.x2 < polygons[0].x1){
+	   	 		polygons.unshift(rect);
+	   	 		return;
+	   	 	}else if(rect.x1 > polygons[0].x2){
+	   	 		polygons.push(rect);
+	   	 		return;
+	   	 	}
+	   	 }else{
+	   	 	for(var i = 0; i < polygons.length; i++){
+	   	       if(rect.x2 < polygons[i].x1 ){
+	   	       	    if(i === 0){
+	   	       	    	polygons.unshift(rect)
+	   	       	    	return; 
+	   	       	    }else if(rect.x1 > polygons[i - 1].x2){
+	   	       	    	polygons.splice( i-1 , 0, rect)
+	   	       	    	return;
+	   	       	    }	   	       		
+	   	       }else {
+	   	          if(rect.x1 > polygons[polygons.length - 1].x2){
+	   	          	polygons.push(rect)
+	   	          	return;
+	   	          }
+	   	       }
+	   	   }
+	   	 }	   	   
+	   }
+	}
+
+	// 更新橡皮框
+	function updateRubberband(loc) {
+	   updateRubberbandRectangle(loc);
+	   drawRubberbandShape(loc);
+	}
+
+	// 矩形绘制
+	function drawRect(rect){
+		rect.createPath();
+		rect.stroke();
+		rect.fill();
+	}
+
+	// 绘制全部矩形
+	function drawRects(){
+		polygons.forEach(function(polygon){
+			drawRect(polygon);
+		});
+	}
+
+	// 绘图状态开始拖动/鼠标按下
+	function startDragging(loc){
+		surfaceData = util.saveDrawingSurface(audio_rect);
+		mousedown.x = loc.x;
+		mousedown.y = 0;
+	}
+	// 开始编辑
+	function startEditing(canvas){
+		canvas.style.cursor = 'pointer';
+		editing = true;
+	}
+	// 结束编辑
+	function endEditing(canvas){
+		editing = false
+	}
+
+	
+	var util = new Util();
+
+	audio_rect.addEventListener('dblclick', function(e){
+		e.stopPropagation();
+		e.preventDefault();
+
+		var loc = util.windowToCanvas(audio_rect, e.clientX, e.clientY);
+		polygons.forEach(function(polygon){
+			polygon.createPath();
+			if(context.isPointInPath(loc.x, loc.y)){
+				console.log('aa')
+			}
+		})
+	})
+	// mousedown
+	audio_rect.addEventListener('mousedown', function(e){
+		e.stopPropagation();
+		e.preventDefault();
+
+		var loc = util.windowToCanvas(audio_rect, e.clientX,e.clientY);
+
+		// 编辑状态
+		if(editing){
+			polygons.forEach(function(polygon){
+				polygon.createPath();
+				// 判断点是否在矩形内 
+				if(context.isPointInPath(loc.x, loc.y)){
+					if(polygon.isPointInLeft(loc)){
+						audio_rect.style.cursor = 'crosshair';
+						polygon.isInLeft = true
+					}
+					if(polygon.isPointInRight(loc)){
+						audio_rect.style.cursor = 'crosshair';
+						polygon.isInRight = true
+					}
+					// 清除
+					context.clearRect(0, 0, audio_rect.width, audio_rect.height);
+					// 将矩形设为选中状态
+					polygon.selected = true;
+					
+					rectDrag = polygon;
+
+					// 重绘矩形
+					drawRects();
+
+					// 记录开始移动的点
+					draggingStartX = loc.x;
+					return;
+				}
+			})
+		}else{  //绘图状态			
+			if(polygons.length != 0){ // 已存在矩形时
+				var flag = false
+				polygons.forEach(function(polygon){
+					polygon.createPath();
+					if(context.isPointInPath(loc.x, loc.y)){
+						flag = true
+					}
+				})
+				if(!flag){
+					startDragging(loc);
+					rectDrag = true;
+				}else{
+					console.log('在矩形内');
+					isInPolygons = true;
+				}
+			}else{
+				startDragging(loc);
+				rectDrag = true;
+			}			
+		}
+	})
+	// 判断点是否在矩形中
+	function pointIsInPolygons(polygons, loc){
+		for(var i = 0; i < polygons.length; i++){			
+			if(polygons[i].isPointIn(loc)){
+				return true
+			}
+		}
+		return false
+	}
+
+	audio_rect.addEventListener('mousemove', function(e){
+		e.stopPropagation();
+		e.preventDefault();
+
+		var loc = util.windowToCanvas(audio_rect, e.clientX, e.clientY);
+		
+		if(editing){
+
+			var i = 0;
+			polygons.forEach(function(polygon){
+				polygon.createPath();
+				if(context.isPointInPath(loc.x, loc.y)){
+					if(polygon.isPointInLeft(loc) || polygon.isPointInRight(loc)){
+						i = 1;
+					}
+				}
+				if(i === 1){
+
+					audio_rect.style.cursor = 'crosshair';
+				}else if (i === 0){
+					audio_rect.style.cursor = 'pointer';
+				}
+			})
+		} 
+
+		// 编辑状态
+		if(editing && rectDrag){
+			// 移动的距离
+			var deltaX = loc.x - draggingStartX;
+
+			draggingStartX = loc.x;
+
+			
+
+			// 矩形在数组中的位置
+			var index = getPolygonIndex(polygons, rectDrag);
+			// 改变矩形位置
+			if(rectDrag.isInLeft){ //往左拉伸
+				if (rectDrag.x2 - rectDrag.x1 - deltaX > 10) { //宽度不小于10					
+					if(polygons[index - 1]){ //左边有矩形
+						if(rectDrag.x1 + deltaX > polygons[index - 1].x2){
+							rectDrag.changeX1(deltaX);
+						}
+					}else{ //左边没有矩形
+						if(rectDrag.x1 + deltaX >= 0){
+							rectDrag.changeX1(deltaX);
+						}
+					}
+				}			
+			}else if(rectDrag.isInRight){  //往右拉伸
+				if(rectDrag.x2 + deltaX - rectDrag.x1 > 10){ //宽度不小于10
+					if(polygons[index + 1]){ //右边有矩形
+						if(rectDrag.x2 + deltaX < polygons[index + 1].x1){
+							rectDrag.changeX2(deltaX);
+						}
+					}else{ //右边没有矩形
+						if(rectDrag.x2 + deltaX <= audio_rect.width){
+							rectDrag.changeX2(deltaX);	
+						}
+					}
+				}				
+			}else {  //整体移动				
+				if(deltaX <= 0){
+					if(polygons[index - 1]){ //左边有矩形
+						if(rectDrag.x1 + deltaX > polygons[index -1].x2){
+							rectDrag.changePoints(deltaX);
+						}
+					}else{ //左边没有矩形
+						if(rectDrag.x1 + deltaX >= 0){
+							rectDrag.changePoints(deltaX);
+						}
+					}
+				}else{ 
+					if(polygons[index + 1]){ //右边有矩形
+						if(rectDrag.x2 + deltaX < polygons[index + 1].x1){
+							rectDrag.changePoints(deltaX);
+						}
+					}else{ //右边没有矩形
+						if(rectDrag.x2 + deltaX <= audio_rect.width){
+							rectDrag.changePoints(deltaX);
+						}
+					}
+				}
+			}		
+			context.clearRect(0, 0, audio_rect.width, audio_rect.height);
+			// 重绘矩形
+			drawRects();
+			if(guidewires){
+				util.drawGuidewires(audio_rect, loc.x, loc.y);
+			}
+		}else{  //
+			// 绘图状态
+			if(rectDrag){
+				if(polygons.length != 0){
+					var position = getPointPosition(polygons, mousedown);
+					console.log(position)
+					if(position === -1){ //
+						if(loc.x >= 0 && loc.x < polygons[0].x1){
+							util.restoreDrawingSurface( audio_rect ,surfaceData);
+							updateRubberband(loc);
+							console.log(loc.x)
+
+							mousemovePosition.x = loc.x;
+							mousemovePosition.y = 0;
+							if(guidewires){
+								util.drawGuidewires(audio_rect, loc.x, loc.y);
+							}	
+						}
+					}else if(position === - 2){
+						console.log('here -2')
+						console.log(polygons.length)
+						if(loc.x > polygons[polygons.length - 1].x2 && loc.x < audio_rect.width){
+							util.restoreDrawingSurface( audio_rect ,surfaceData);
+							updateRubberband(loc);
+							
+							mousemovePosition.x = loc.x;
+							mousemovePosition.y = 0;
+							if(guidewires){
+								util.drawGuidewires(audio_rect, loc.x, loc.y);
+							}	
+						}
+					}else {
+						if(loc.x > polygons[position].x2 && loc.x < polygons[position + 1].x1){
+							util.restoreDrawingSurface( audio_rect ,surfaceData);
+							updateRubberband(loc);
+
+							mousemovePosition.x = loc.x;
+							mousemovePosition.y = 0;
+							if(guidewires){
+								util.drawGuidewires(audio_rect, loc.x, loc.y);
+							}	
+						}
+					}
+				}else{
+					util.restoreDrawingSurface( audio_rect ,surfaceData);
+					updateRubberband(loc);
+
+					mousemovePosition.x = loc.x;
+
+					if(guidewires){
+						util.drawGuidewires(audio_rect, loc.x, loc.y);
+					}	
+				}							
+			}
+		}		
+	})
+
+	function getPointPosition(polygons, mousedown){
+		if(mousedown.x < polygons[0].x1){
+			return -1;
+		}
+		if(mousedown.x > polygons[polygons.length - 1].x2){
+			return -2;
+		}
+		for(var i = 0; i < polygons.length; i++){
+			if(mousedown.x > polygons[i].x2 && mousedown.x < polygons[i + 1].x1){
+				return i
+			}
+		}		
+	}
+	function getPolygonIndex(polygons, polygon){
+		for(var i = 0; i < polygons.length; i++){
+			if (polygons[i].x1 === polygon.x1) {
+				return i
+			}
+		}
+	}
+
+
+	audio_rect.addEventListener('mouseup', function(e){
+		e.stopPropagation();
+		e.preventDefault();
+
+		var loc = util.windowToCanvas(audio_rect, e.clientX, e.clientY);
+		rectDrag = false;
+
+		if(editing){
+			polygons.forEach(function(polygon){
+				polygon.createPath();
+				if(context.isPointInPath(loc.x, loc.y)){
+					context.clearRect(0, 0, audio_rect.width, audio_rect.height);					
+					polygon.selected = false;
+					polygon.isInLeft = false;
+					polygon.isInRight = false;					
+					drawRects();
+					return;
+				}
+			})
+		}else{	
+			if(!isInPolygons){
+				
+				if(mousemovePosition.x != loc.x){
+					loc.x = mousemovePosition.x;
+				}
+				util.restoreDrawingSurface(audio_rect, surfaceData);
+				updateRubberband(loc)
+
+			}else{
+				isInPolygons = false;
+			}						
+		}
+		
+	})
+	
+	editCheckbox.addEventListener('change', function(e){
+		e.stopPropagation();
+		e.preventDefault();
+
+		if(editCheckbox.checked){
+			startEditing(audio_rect);
+			console.log(editing)
+		}else{
+			endEditing(audio_rect);
+			console.log(editing)
+		}
+
+	})
+
+  	judge_type_a.addEventListener('click', function(e){
+  	  e.stopPropagation();
+  	  e.preventDefault();
+
+  	  // switch class
+  	  addClass(this, 'judge_wrap_type_selected');
+  	  removeClass(judge_type_b, 'judge_wrap_type_selected');
+  	  removeClass(judge_type_ab, 'judge_wrap_type_selected');
+  	  // switch panel
+  	  judge_text_a.style.display = 'block';
+  	  judge_text_b.style.display = 'none';
+  	  judge_text_ab.style.display = 'none';
+  	 
+
+  	})
+  	judge_type_b.addEventListener('click', function(e){
+  	  e.stopPropagation();
+  	  e.preventDefault();
+  	  // switch class
+  	  addClass(this, 'judge_wrap_type_selected');
+  	  removeClass(judge_type_a, 'judge_wrap_type_selected');
+  	  removeClass(judge_type_ab, 'judge_wrap_type_selected');
+  	  // switch panel
+  	  judge_text_a.style.display = 'none';	  
+  	  judge_text_b.style.display = 'block';
+  	  judge_text_ab.style.display = 'none';
+
+  	})
+
+  	judge_type_ab.addEventListener('click', function(e){
+  	  e.stopPropagation();
+  	  e.preventDefault();
+  	  // switch class
+  	  addClass(this, 'judge_wrap_type_selected');
+  	  removeClass(judge_type_a, 'judge_wrap_type_selected');
+  	  removeClass(judge_type_b, 'judge_wrap_type_selected');
+
+      judge_text_a.style.display = 'none';	  
+  	  judge_text_b.style.display = 'none';
+  	  judge_text_ab.style.display = 'block';
+  	})
+
+  	// 
+  	function hasClass(ele, cls){
+  	  return ele.className.match(new RegExp('(\\s|^)' + cls + '(\\s|$)'));
+  	}
+  	function addClass(ele, cls){
+  	  if(!hasClass(ele, cls)){
+  	  	ele.className += ' ' + cls;
+  	  }
+  	}
+  	function removeClass(ele, cls){
+  	  if(hasClass(ele, cls)){
+  	  	var reg = new RegExp('(\\s|^)' + cls + '(\\s|$)');
+  	  	ele.className = ele.className.replace(reg, '');
+  	  }
+  	}
+  
+  	var context_audio_wave = audio_wave.getContext('2d');
+    
+    DrawGrid(audio_wave, 70, 20);
+  	
+  	function DrawGrid(canvas,gridWidth,gridHeight){
+  		var width = canvas.width;
+  		var height = canvas.height;
+  		var context = canvas.getContext('2d');
+  		var xNum = parseInt(Math.floor(width / gridWidth));
+  		var yNum = parseInt(Math.floor(height / gridHeight));
+  		for(var i = 1; i <= xNum; i++){
+  		  DrawXAxis(context,gridWidth, i, height);
+  		}
+  		for(var j = 1; j <= yNum; j++){
+  		  DrawYAxis(context,gridHeight, j, width);
+  		}
+  	}
+  	function DrawXAxis(context,gridWidth,i, height){
+  	  context.save();
+      context.beginPath();
+      context.moveTo(gridWidth * i + 0.5, 0);
+      context.lineTo(gridWidth * i + 0.5, height);
+      context.strokeStyle = 'green';
+      context.lineWidth = 1;
+      context.stroke();
+      context.closePath();
+      context.restore();
+  	}
+  	function DrawYAxis(context,gridHeight, i ,width){
+  	  context.save();
+      context.beginPath();
+      context.moveTo(0, gridHeight * i + 0.5);
+      context.lineTo(width, gridHeight * i + 0.5);
+      context.strokeStyle = 'green';
+      context.lineWidth = 1;
+      context.stroke();
+      context.closePath();
+      context.restore();
+  	}
+
+  	file_input.addEventListener('change',function(e){
+      e.preventDefault;
+      e.stopPropagation;
+      console.log(file_input.files.length);
+      file_idx = 0;
+      loadData();
+  	})
+    
+    play.addEventListener('click', function(e){
+      e.stopPropagation();
+      e.preventDefault();
+      if( audio.paused ) {
+      	audio.play()
+      }
+      console.log(audio.paused)
+    })
+
+    pause.addEventListener('click', function(e){
+      e.stopPropagation();
+      e.preventDefault();
+      console.log(audio.paused);
+      if( !audio.paused ) {
+      	audio.pause();
+      }
+    })
+    // setTime.addEventListener('click', function(e){
+    //   e.stopPropagation();
+    //   e.preventDefault();
+    //   audio.currentTime = 80;
+    // })
+
+    // setInterval(function(){
+    //  console.log(audio.currentTime)
+    // },1000)
+    
+  	console.log(file_input.files[0]);
+
+  	function select(id){
+  	  return document.getElementById(id)
+  	}
+    
+    draw_rect.onclick = function(e){
+	  e.stopPropagation();
+	  e.preventDefault();
+	  draw_state = true;
+    }
+    
+    // 
+    WavFile = function(filePath) {
+        this.path = filePath;
+        this.rawBinString;
+        this.shortArray;
+        this.loaded = false;
+        this.loadCallback = null;
+        this.frequency;
+        this.dataLength;
+        this.time;
+        this.load();
+    }
+
+    WavFile.prototype = {
+        load: function() {
+            var reader = new FileReader();
+            var that = this;
+            reader.onload = function(e) {
+                let head = 78;
+                that.rawBinString = e.target.result;
+                that.frequency = that.char2long(that.rawBinString, 24);
+                that.dataLength = that.char2long(that.rawBinString, 74) / 2;
+                that.shortArray = that.byteString2shortArray(that.rawBinString.slice(head));
+                that.time = that.dataLength / that.frequency;
+                if (that.loadCallback != null) {
+                    that.loadCallback();
+                }
+                that.loaded = true;
+            }
+            reader.readAsBinaryString(this.path);
+        },
+        onload: function(callback) {
+            this.loadCallback = callback;
+            if (this.loaded) {
+                callback();
+            }
+        },
+        getFrequency: function() {
+            return this.frequency;
+        },
+        getTime: function() {
+            return this.time;
+        },
+        getData: function() {
+            return this.shortArray;
+        },
+        char2short: function(c1, c2) {
+            let s = c2 * 256 + c1;
+            return s > 32767 ? s - 65536 : s;
+        },
+        char2long: function(byteString, startChar) {
+            return byteString.charCodeAt(startChar+3) * 16777216 + byteString.charCodeAt(startChar+2) * 65536
+                    + byteString.charCodeAt(startChar+1) * 256 + byteString.charCodeAt(startChar);
+        },
+        byteString2shortArray: function(bs) {
+            let len = bs.length / 2;
+            sa = new Array(len);
+            for (var i = 0; i < len; i++) {
+                sa[i] = this.char2short(bs.charCodeAt(i*2), bs.charCodeAt(i*2+1));
+            }
+            return sa;
+        }
+    }
+    function loadData(order=1) {
+        var fileName = file_input.files[file_idx].name;
+        var len = fileName.length;
+        while (fileName.slice(len - 3, len) != 'wav') {
+            if (order == 1) {
+                ++file_idx;
+            } else {
+                --file_idx;
+            }
+            fileName = file_input.files[file_idx].name;
+            len = fileName.length;
+        }
+
+        var wf = new WavFile(file_input.files[file_idx]);
+        wf.onload(function() {
+            console.log('wf.onload');
+            let data = wf.getData();
+            console.log(data.length);
+            console.log(data[19]);
+            let time = wf.getTime();
+            console.log(time);
+            var changedData = changeData(data, time, 100, 75);
+            console.log('绘制线数')
+            console.log(changedData.length)
+            console.log(changedData)
+            console.log(audio_bg.width);
+            audio_bg.width = 32000 ;
+            console.log(audio_bg.width)
+            var drawLine = new DrawLine(audio_bg,changedData);
+            drawLine.paint();
+            var drawCoord = new DrawCoord(audio_bg,10.5,75);
+            drawCoord.paint();           
+        });
+    }
+
+    function changeData(data, time, width, height){
+    	var rate = parseInt(data.length / time);
+    	var selectWidth = rate / width;
+    	var selectedData = [];
+    	console.log('changeData详细信息')
+    	console.log(rate)
+    	console.log(selectWidth)
+    	for(var i = 0; i < data.length; i++){	
+    		if((i % Math.round(selectWidth)) == 0){
+    			selectedData.push(data[i])
+    		}
+    	}	
+    	for(var j = 0; j < selectedData.length; j++){
+    		if(Math.abs(selectedData[j]) * 0.1 > height){
+    			if(Math.abs(selectedData[j]) / selectedData[j] > 0){
+ 					selectedData[j] = (Math.abs(selectedData[j]) / selectedData[j]) * height - 30 + 30 * Math.random();
+    			}else{
+      			  	selectedData[j] = (Math.abs(selectedData[j]) / selectedData[j]) * height + 30 - 30 * Math.random();
+      			}
+    		}else{
+    			selectedData[j] = parseInt(selectedData[j] * 0.1);
+    		}
+    		
+    	}
+    	return selectedData;
+    }
+
+    function DrawLine(canvas,data){
+    	this.canvas = canvas;
+    	this.context = canvas.getContext('2d');
+    	this.data = data;
+    }
+    DrawLine.prototype = {
+    	paint: function(){  
+    	  for(var i = 0; i < this.data.length; i++){
+    	  	this.drawingLine(i + 10.5 , 75,i + 10.5 ,75 - this.data[i] )  	
+    	  }	  
+    	},
+    	drawingLine: function(x1,y1,x2,y2){
+    	  this.context.save();
+    	  this.context.beginPath();
+    	  this.context.moveTo(x1,y1);
+    	  this.context.lineTo(x2,y2);
+    	  this.context.strokeStyle = 'green';
+    	  this.context.lineWidth = 1;
+    	  this.context.stroke();
+    	  this.context.closePath();
+    	  this.context.restore();
+    	}
+    }
+
+    function DrawCoord(canvas,x,y){
+      this.canvas = canvas,
+      this.context = canvas.getContext('2d'),
+      this.x = x,
+      this.y = y
+    } 
+    DrawCoord.prototype = {
+    	paint: function(){
+    	  this.drawXAxis(this.x, this.y);
+    	  this.drawYAxis(this.x, this.y);
+    	},
+    	drawXAxis: function(x,y){
+    	  this.drawingLine(x,y,this.canvas.width,y);
+    	},
+    	drawYAxis: function(x,y){
+          this.drawingLine(x,y,x,0);
+          this.drawingLine(x,y,x,this.canvas.height);
+    	},
+    	drawingLine: function(x1,y1,x2,y2){
+    	  this.context.save();
+    	  this.context.beginPath();
+    	  this.context.moveTo(x1,y1);
+    	  this.context.lineTo(x2,y2);
+    	  this.context.strokeStyle = 'orange';
+    	  this.context.lineWidth = 2;
+    	  this.context.stroke();
+    	  this.context.closePath();
+    	  this.context.restore();
+    	}
+    }
+  </script>
+  <!-- <script type="text/javascript" src='drawRect.js'></script> -->
+</body>
+</html>
