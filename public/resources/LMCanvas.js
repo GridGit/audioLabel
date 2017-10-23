@@ -260,16 +260,16 @@ DrawCoord.prototype = {
       var y1 = this.height - unit * i;
       var y2 = this.height + unit * i;
       this._drawingLine(this.x - 5, y1, this.x + 5, y1);
-      this._drawingText( parseInt(unit * i)  , this.x - 20, y1 + parseInt(unit / 2));
+      // this._drawingText( parseInt(unit * i)  , this.x - 20, y1 + parseInt(unit / 2));
       this._drawingLine(this.x - 5, y2, this.x + 5, y2);
-      this._drawingText( -parseInt(unit * i) , this.x - 20, y2 );
+      // this._drawingText( -parseInt(unit * i) , this.x - 20, y2 );
     }
   },
   _drawingXUnit: function(){
     var num = parseInt(this.width / this.timeRate);
     for(var i = 1; i <= num; i++){
       var x = this.x + this.timeRate * i;
-      if(this.timeRate < 100){
+      if(this.timeRate < 100){ //10px = 1s 时
         if(i % 5 === 0){
           this._drawingLine(x, this.y, x , this.y - 15);
           this._drawingText( parseInt(i) + 's', x - 5, this.y + 10);
@@ -277,7 +277,7 @@ DrawCoord.prototype = {
           this._drawingLine(x, this.y, x , this.y - 10);
         } 
       }else{
-        if(i % 5 === 0){
+        if(i % 5 === 0){ //100px = 1s 
           this._drawingLine(x, this.y, x , this.y - 15);
           
         }else{
@@ -297,22 +297,19 @@ DrawCoord.prototype = {
   }
 }
 // 线 音频
-var DrawLine = function(canvas, data, coordOffsetX, coordOffsetY){
+var DrawLine = function(canvas, data, coordOffsetX, coordOffsetY, rate){
     this.canvas = canvas,
     this.context = canvas.getContext('2d'),
     this.data = data,
     this.coordOffsetX = coordOffsetX,
-    this.coordOffsetY = coordOffsetY
+    this.coordOffsetY = coordOffsetY,
+    this.rate = rate || 1,
+    this.lineWidth = rate || 1
 }
 DrawLine.prototype = {
     paint: function(){  
       for(var i = 0; i < this.data.length; i++){
-        console.log('音频高度');
-
-        console.log(this.coordOffsetY);
-        console.log(this.coordOffsetY - this.data[i])
-
-        this._drawingLine(i + this.coordOffsetX , this.coordOffsetY,i + this.coordOffsetX ,this.coordOffsetY - this.data[i] )    
+        this._drawingLine(i * this.rate + this.coordOffsetX , this.coordOffsetY - this.data[i][1],i * this.rate + this.coordOffsetX ,this.coordOffsetY - this.data[i][0] )    
       }   
     },
     _drawingLine: function(x1,y1,x2,y2){
@@ -320,8 +317,8 @@ DrawLine.prototype = {
       this.context.beginPath();
       this.context.moveTo(x1,y1);
       this.context.lineTo(x2,y2);
-      this.context.strokeStyle = 'red';
-      this.context.lineWidth = 1;
+      this.context.strokeStyle = 'green';
+      this.context.lineWidth = this.lineWidth;
       this.context.stroke();
       this.context.closePath();
       this.context.restore();
@@ -329,11 +326,14 @@ DrawLine.prototype = {
 }
 
 // 矩形
-var DrawRect = function(x1, y1, x2, y2, canvas, originX, rateX){
+var DrawRect = function(x1, y1, x2, y2, canvas, originX, rateX, initRate){
     this.x1 = x1,
     this.x2 = x2, 
     this.y1 = y1,
     this.y2 = y2,
+
+    
+
     this.canvas = canvas,
     this.context = canvas.getContext('2d'),
     this.selected = false,
@@ -351,7 +351,12 @@ var DrawRect = function(x1, y1, x2, y2, canvas, originX, rateX){
     this.stringifyStartTime = this._stringifyTime(this.startTime),
     this.stringifyEndTime = this._stringifyTime(this.endTime),
     this.text = [],
-    this.type = ''
+    this.type = '',
+
+    this.initRate = initRate,
+    this.scaleX1 = this._getScaleX1(initRate),
+    this.scaleX2 = this._getScaleX2(initRate),
+    this.scalePoints = this._getScalePoints();
 }
 
 DrawRect.prototype = {
@@ -377,6 +382,27 @@ DrawRect.prototype = {
         this.context.stroke();
         
     },
+    scalePaint: function(){
+      this.context.beginPath();
+      this.context.moveTo(this.scalePoints[0].x, this.scalePoints[0].y);
+      for(var i = 1; i < this.scalePoints.length; i++){        
+          this.context.lineTo(this.scalePoints[i].x, this.scalePoints[i].y);
+      }
+      this.context.lineTo(this.scalePoints[0].x, this.scalePoints[0].y);
+
+      this.context.closePath();
+
+      this.context.strokeStyle = this.strokeStyle;
+
+      if(this.filled){
+          this.context.fillStyle = this.fillStyle;
+          this.context.fill();
+      }
+      if(this.selected){
+          this.context.fillStyle = this.fillStyle;
+      }
+      this.context.stroke();
+    },
     _getPoints: function(){
         var points = [];
         points.push(new Point(this.x1, this.y1));
@@ -384,6 +410,20 @@ DrawRect.prototype = {
         points.push(new Point(this.x2, this.y2));
         points.push(new Point(this.x1, this.y2));
         return points
+    },
+    _getScalePoints: function(){
+        var points = [];
+        points.push(new Point(this.scaleX1, this.y1));
+        points.push(new Point(this.scaleX2, this.y1));
+        points.push(new Point(this.scaleX2, this.y2));
+        points.push(new Point(this.scaleX1, this.y2));
+        return points
+    },
+    _getScaleX1: function(initRate){
+      return (this.x1 - this.originX) * initRate + this.originX;
+    },
+    _getScaleX2: function(initRate){
+      return (this.x2 - this.originX) * initRate + this.originX;
     },
     _getStartTime: function(){
       return (this.x1 - this.originX) / this.rateX;
@@ -431,6 +471,11 @@ DrawRect.prototype = {
         this.stringifyStartTime = this._stringifyTime(this.startTime);
         this.stringifyEndTime = this._stringifyTime(this.endTime);
     },
+    changeScaleState: function(initRate){
+      this.scaleX1 = this._getScaleX1(initRate);
+      this.scaleX2 = this._getScaleX2(initRate);
+      this.scalePoints = this._getScalePoints();
+    },
     createPath: function(){
         this.context.beginPath();
         this.context.moveTo(this.points[0].x, this.points[0].y);
@@ -440,6 +485,33 @@ DrawRect.prototype = {
         this.context.lineTo(this.points[0].x, this.points[0].y);
 
         this.context.closePath();
+    },
+    createScalePath: function(){
+      this.context.beginPath();
+      this.context.moveTo(this.scalePoints[0].x, this.scalePoints[0].y);
+      for(var i = 1; i < this.scalePoints.length; i++){        
+          this.context.lineTo(this.scalePoints[i].x, this.scalePoints[i].y);
+      }
+      this.context.lineTo(this.scalePoints[0].x, this.scalePoints[0].y);
+
+      this.context.closePath();
+    },
+    scaleStroke: function(){
+        this.context.save();
+        this.createScalePath();
+        this.context.strokeStyle = this.strokeStyle;
+        this.context.stroke();
+        this.context.restore();
+    },
+    scaleFill: function(){
+        this.context.save();
+        this.createScalePath();
+        this.context.fillStyle = this.fillStyle;
+        if(this.selected){
+            this.context.fillStyle = this.selectedFillStyle;
+        }
+        this.context.fill();
+        this.context.restore();
     },
     stroke: function(){
         this.context.save();
@@ -468,6 +540,13 @@ DrawRect.prototype = {
             this.y2 = this.y2 + deltaY;
         }
         this._changeState();
+
+    },
+    changeScalePoints: function(initRate){
+      this.scaleX1 = this._getScaleX1(initRate);
+      this.scaleX2 = this._getScaleX2(initRate);
+     
+      this.scalePoints = this._getScalePoints();
     },
     changeX1: function(deltaX){
         if (deltaX) {
@@ -476,11 +555,23 @@ DrawRect.prototype = {
 
         this._changeState();
     },
+    changeScaleX1: function(deltaX, initRate){
+      if(deltaX && initRate){
+        this.scaleX1 = this._getScaleX1(initRate);
+      }
+      this.scalePoints = this._getScalePoints();
+    },
     changeX2: function(deltaX){
         if(deltaX){
             this.x2 = this.x2 + deltaX;
         }
        this._changeState();
+    },
+    changeScaleX2: function(deltaX, initRate){
+      if(deltaX && initRate){
+        this.scaleX2 = this._getScaleX2(initRate);
+      }
+      this.scalePoints = this._getScalePoints(initRate);
     },
     isPointIn: function(loc){
         if(loc.x >= this.x1 && loc.x <= this.x2 && loc.y >= this.y1 && loc.y <=this.y2){
@@ -562,3 +653,74 @@ DragRect.prototype = {
                 && mouse.y > this.top && mouse.y < this.bottom;
     }
 }
+// wav文件
+var WavFile = function(filePath) {
+  this.path = filePath;
+  this.rawBinString;
+  this.shortArray;
+  this.loaded = false;
+  this.loadCallback = null;
+  this.frequency;
+  this.dataLength;
+  this.time;
+  this.load();
+}
+WavFile.prototype = {
+  load: function() {
+      var reader = new FileReader();
+      var that = this;
+      reader.onload = function(e) {
+          let head = 78;
+          that.rawBinString = e.target.result;
+          that.frequency = that.char2long(that.rawBinString, 24);
+          that.dataLength = that.char2long(that.rawBinString, 74) / 2;
+          that.shortArray = that.byteString2shortArray(that.rawBinString.slice(head));
+          that.time = that.dataLength / that.frequency;
+          if (that.loadCallback != null) {
+              that.loadCallback();
+          }
+          that.loaded = true;
+      }
+      reader.readAsBinaryString(this.path);
+  },
+  onload: function(callback) {
+      this.loadCallback = callback;
+      if (this.loaded) {
+          callback();
+      }
+  },
+  getFrequency: function() {
+      return this.frequency;
+  },
+  getTime: function() {
+      return this.time;
+  },
+  getData: function() {
+      return this.shortArray;
+  },
+  char2short: function(c1, c2) {
+      let s = c2 * 256 + c1;
+      return s > 32767 ? s - 65536 : s;
+  },
+  char2long: function(byteString, startChar) {
+      return byteString.charCodeAt(startChar+3) * 16777216 + byteString.charCodeAt(startChar+2) * 65536
+              + byteString.charCodeAt(startChar+1) * 256 + byteString.charCodeAt(startChar);
+  },
+  byteString2shortArray: function(bs) {
+      let len = bs.length / 2;
+      sa = new Array(len);
+      for (var i = 0; i < len; i++) {
+          sa[i] = this.char2short(bs.charCodeAt(i*2), bs.charCodeAt(i*2+1));
+      }
+      return sa;
+  }
+} 
+
+
+
+
+
+
+
+
+

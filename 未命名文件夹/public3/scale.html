@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>scale</title>
+	<style type="text/css">
+		.canvas_wrap{
+			width: 800px;
+			height: 420px;
+			overflow-x: scroll;
+		}
+		.scale_bg{
+			background-color: gray;
+		}
+		.scale_rect{
+			background-color: gray;
+		}
+	</style>
+</head>
+<body>
+	<div class="canvas_wrap">
+		<canvas id="scale_bg" class="scale_bg" width="800" height="400"></canvas>
+		
+	</div>
+	<canvas id="scale_rect" class="scale_rect" width="800" height="600"></canvas>
+		
+	<!-- </canvas><canvas id="scale_rect" class="scale_rect" width="800" height="600"></canvas> -->
+	<div>
+		<output id="scale_output">1.0</output>
+		<input id="range" type="range" min="-100" max="100" value="0">
+		<button id="scale_btn">button</button>	
+	</div>
+	<script type="text/javascript">
+		
+		// 获取DOM
+		var canvas_bg = document.getElementById('scale_bg');
+		var canvas_rect = document.getElementById('scale_rect');
+
+		var range = document.getElementById('range');
+
+		var scale_btn = document.getElementById('scale_btn');
+		var scale_output = document.getElementById('scale_output');
+
+		// 获取绘图环境
+		var context_bg = canvas_bg.getContext('2d');
+		var context_rect = canvas_rect.getContext('2d');
+
+		// 创建image对象
+		var image = new Image();
+		image.src = './6.jpg';
+		
+		// 变量
+		// image 初始宽度
+		var	height;
+		var width;
+		// canvas初始宽度
+		var initCanvasWidth = canvas_bg.width;
+		var initCanvasHeight = canvas_bg.height;
+		// image 加载完成
+		image.onload = function(){
+			height = image.height;
+			width = image.width;
+			// drawImage
+			context_bg.drawImage(image, 0, 0, width, height);
+		}
+		// range change event
+		range.addEventListener('change', function(e){
+			console.log(e.target.value);
+
+			var rate = e.target.value / 100;
+			// 缩放后的宽度
+			var scaleWidth = image.width * (1 + rate) || 10;
+			
+			console.log(scaleWidth);
+			// 缩放后的高度，不变
+			var scaleHeight = image.height;
+			// if 缩放后的图像宽度大于初始canvas宽度，改变canvas宽度
+			if(scaleWidth > initCanvasWidth){
+				canvas_bg.width = scaleWidth;
+			}else if(scaleWidth <= initCanvasWidth){
+				canvas_bg.width = initCanvasWidth;
+			}
+
+			context_bg.clearRect(0, 0, canvas_bg.width, canvas_bg.height); 
+			context_bg.drawImage(image, 0 , 0, scaleWidth, scaleHeight);
+			
+			scale_output.innerText = 1 + rate;
+		})
+		var initRate = 0;
+
+		canvas_bg.addEventListener('mousewheel', mousewheelFn, false);
+
+		function mousewheelFn(e){
+			e.stopPropagation();
+			e.preventDefault();	
+			console.log('计算滚动前：');
+			console.log(initRate);
+
+			var rate = e.wheelDelta / 120 / 10;
+			initRate = rate + initRate
+			console.log('计算滚动后：');
+			console.log(initRate);
+
+			var scaleWidth = image.width * (1 + initRate);
+
+			if(scaleWidth <= 0){
+				
+				console.log('小于0');
+				scaleWidth = 10;
+				initRate = initRate - rate;
+				console.log(initRate);
+				return;
+			}
+			var scaleHeight = image.height;
+
+			if(scaleWidth > initCanvasWidth){
+				canvas_bg.width = scaleWidth;
+			}else if(scaleWidth <= initCanvasWidth){
+				canvas_bg.width = initCanvasWidth;
+			}
+			context_bg.clearRect(0, 0, canvas_bg.width, canvas_bg.height);
+			context_bg.drawImage(image, 0, 0, scaleWidth, scaleHeight);
+
+			scale_output.innerText = 1 + initRate;
+		}
+		canvas_rect.addEventListener('mousewheel', mousewheelFn, false);
+	</script>
+</body>
+</html>

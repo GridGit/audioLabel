@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>audio</title>
   <link rel="stylesheet" type="text/css" href="./resources/main.css">
 </head>
@@ -9,20 +10,11 @@
   <div class="wrap">
   	<div class="canvas_wrap">
   		<canvas id="audio_bg" class="audio_bg" width="800" height="200"></canvas>
-  		<canvas id="audio_rect" class="audio_rect" width="800" height="200"></canvas>
   	</div>
   	<div class="audio_wrap">
 	  	<div id="control_bar" class="audio_operate">
         <div><audio id="audio" controls class="audio"></audio></div>
-        <div id='dragDiv' style="display: none;">
-            <label>操作:</label><input class="checkbox" type='checkbox' id='editCheckbox'/>
-        </div>
-	  	  <div><input type="file" class="file" name="file" id="file_list" multiple="true"></div>
-        <div class="operate_btn" style="display: none;">
-           <div id="play" >播放</div>
-           <div id="pause" >暂停</div>
-           <div id="restart" >重播</div>
-        </div>	  	 
+	  	  <div><input type="file" class="file" name="file" id="file_list" multiple="true" accept="audio/x-wav" ></div> 	 
 	  	</div>
   	</div>
   	<div class="judge_wrap">
@@ -74,7 +66,7 @@
        <div class="result_double_time">
          <p class="start_time">{{startTime}}</p>--<p>{{endTime}}</p>
        </div><div class="result_double_text">
-         <div ><p class="result_type">{{typeA}}:</p><p class="result_content">{{contextA}}</p></div>
+         <div><p class="result_type">{{typeA}}:</p><p class="result_content">{{contextA}}</p></div>
          <div><p class='result_type'>{{typeB}}:</p><p class="result_content">{{contextB}}</p></div>
        </div>
      </li>

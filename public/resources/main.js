@@ -1,25 +1,17 @@
 window.onload = function(){
   
-  // select() ==>  document.getElementById()
+      // select() ==>  document.getElementById()
       // audio控件
   var audio = select('audio'),
-      // 开始
-      play = select('play'),
-	  // 暂停
-      pause = select('pause'),
-	  // 重播
-      restart = select('restart'),
-	  // 文件控件
+  	  // 文件控件
       file_input = select('file_list'),	
-	  // var setTime = select('setTime');	
-	  edit_checkbox = select('editCheckbox'),
-	  // canvas
-	  audio_bg = select('audio_bg'),
-	  audio_rect = select('audio_rect'),
-	  // canvas context
-	  context = audio_rect.getContext('2d'),
+  	  // var setTime = select('setTime');	
+  	  edit_checkbox = select('editCheckbox'),
+  	  // canvas
+  	  audio_bg = select('audio_bg'),
+  	  // canvas context
       bg_context = audio_bg.getContext('2d'),
-	  // a b and ab button
+	    // a b and ab button
       judge_type_a = select('judge_type_a'),
       judge_type_b = select('judge_type_b'),
       judge_wrap_type_ab = select('judge_wrap_type_ab'),
@@ -45,28 +37,24 @@ window.onload = function(){
 
       // 选择的按钮 A B AB
   var selectedType = 'A',
-      // 文件索引
-	  fileIdx = 0,
-	  // 是否编辑
-	  editing = false,
-	  // 多边形列表
-	  polygons = [],
-	  // 绘图表面数据
-	  surfaceData,
-      // 游标绘制前数据
-      beforeVernierData,
+        // 文件索引
+  	  fileIdx = 0,
+  	  // 是否编辑
+  	  editing = false,
+  	  // 多边形列表
+  	  polygons = [],
+  	  // 绘图表面数据
+  	  surfaceData,   
       // 鼠标位置坐标
       mousedown = {},
       // 鼠标移动最后坐标
-      mousemovePosition = {},
+      mousemoveEndPosition = {},
       // 是否在拖动 
       rectDrag = false,
       // 移动 拉伸起始点
       draggingStartX,
-	  // 指示线
+	    // 指示线
       guidewires = true,
-      // 在矩形内
-      isInPolygons = false,
       // 时间比率 100px/s or 10px/s
       timeRate,
       // 音频宽度
@@ -75,16 +63,19 @@ window.onload = function(){
       coordOffsetX = 20.5, //10.5
       // 坐标原点 y
       coordOffsetY = parseInt(audio_bg.height / 2), // 200 / 2  100
-      // 定时器
-      currentTimeFlag,
-      // 左边界
-      leftBoundary,
-      // 右边界
-      rightBoundary,
       // 选中的ploygon
       editingPloygon,
       // play
-      playFlag = 0;
+      playFlag = 0,
+      // 
+      mousemoveFlag = true,
+      initBgCanvasWidth,
+      changedData,
+  	  startBgCanvasWidth = audio_bg.width,
+  	  initRate = 1,
+      data ;
+
+  var util = new Util();
 
   // controls
   var controls = {
@@ -109,7 +100,7 @@ window.onload = function(){
           polygons.splice(i, 1);
         }
       }
-      view.renderAudioRect();
+      view.renderBgAudio();
       view.renderBarAfterDel();
       view.render();
       setTimeout(function(){
@@ -120,7 +111,6 @@ window.onload = function(){
       editingPloygon = polygons[index];
       judge_start_time.innerText = editingPloygon.stringifyStartTime;
       judge_end_time.innerText = editingPloygon.stringifyEndTime;
-
     },
     getJSONData: function(name){
       var jsonData = {};
@@ -172,6 +162,30 @@ window.onload = function(){
       //   }
       // })
     },
+    changeData: function(data, time, frequency, width, height){
+	  	var selectWidth = Math.floor(frequency / width);
+	  	var selectedData = [];
+	    // 筛选数组数据
+	  	for(var i = 0; i < data.length; i++){	
+	  		if((i % selectWidth) == 0){
+	  			selectedData.push(data[i])
+	  		}
+	  	}	
+	    // 改变数组数据值
+	  	for(var j = 0; j < selectedData.length; j++){
+	  		if(Math.abs(selectedData[j]) * 0.1 > height){
+	  			if(Math.abs(selectedData[j]) / selectedData[j] > 0){
+						selectedData[j] = (Math.abs(selectedData[j]) / selectedData[j]) * height - 30 + 30 * Math.random();
+	  			}else{
+	    			  	selectedData[j] = (Math.abs(selectedData[j]) / selectedData[j]) * height + 30 - 30 * Math.random();
+	    			}
+	  		}else{
+	  			selectedData[j] = parseInt(selectedData[j] * 0.1);
+	  		}	
+	  	}
+	    // 返回过滤后的数组
+	  	return selectedData;
+	  },
     updateList: function(){
       view.render();
     },
@@ -290,9 +304,26 @@ window.onload = function(){
         $resultList.append(thisTemplate);
       });
     },
-    renderAudioRect: function(){
-      context.clearRect(0, 0, audio_rect.width, audio_rect.height);
-      drawRects();
+    renderBgAudio: function(){
+      bg_context.clearRect(0, 0, audio_bg.width, audio_bg.height);
+       // 背景网格
+      var gridWidth = 70;
+      var griHeight = 20;
+      var drawBcakgrounGrid = new DrawBcakgrounGrid(audio_bg, gridWidth * initRate , griHeight);
+      drawBcakgrounGrid.paint();        
+      // 音频信号
+      var drawLine = new DrawLine(audio_bg, changedData, coordOffsetX, coordOffsetY, initRate);
+      drawLine.paint(); 
+      // 坐标轴
+      var drawCoord = new DrawCoord(audio_bg, coordOffsetX, coordOffsetY, timeRate * initRate);
+      drawCoord.paint();
+
+      for(var i = 0; i < polygons.length; i++){
+        polygons[i].changeScaleState(initRate);
+        polygons[i].createScalePath();
+        polygons[i].scaleStroke();
+        polygons[i].scaleFill();
+      }
     },
     renderBarAfterDel: function(){
       editingPloygon = null;
@@ -306,78 +337,13 @@ window.onload = function(){
     }
   }
 
-controls.init();
+  controls.init();
 
-
-  // Rubberbands
-	// 绘制橡皮框
-	function drawRubberbandShape(loc) {
-	   if(mousedown.x == loc.x) return;
-
-     if(mousedown.x > loc.x){
-      var x = loc.x;
-      loc.x = mousedown.x;
-      mousedown.x = x;
-     }
-
-	   if(rectDrag){
-	   		var rect = new DrawRect(mousedown.x, mousedown.y, loc.x, audio_rect.height, audio_rect, coordOffsetX, timeRate);
-	  		drawRect(rect);
-	   }else{
-	   		if(Math.abs(mousedown.x - loc.x) < 10) return;
-	   		var rect = new DrawRect(mousedown.x, mousedown.y, loc.x, audio_rect.height, audio_rect, coordOffsetX, timeRate);
-	  		drawRect(rect);
-	   }	  
-	   
-
-	   if(!rectDrag){
-       // rect.startTime = (rect.x1 - coordOffsetX) / timeRate;
-       // rect.endTime = (rect.x2 - coordOffsetX) / timeRate;
-       judge_start_time.innerText = rect.stringifyStartTime;
-       judge_end_time.innerText = rect.stringifyEndTime;
-
-       editingPloygon = rect;
-
-	   	 if(polygons.length == 0){
-	   	 	polygons.push(rect);
-	   	 	return;
-	   	 }else if(polygons.length == 1){
-	   	 	if(rect.x2 < polygons[0].x1){
-	   	 		polygons.unshift(rect);
-	   	 		return;
-	   	 	}else if(rect.x1 > polygons[0].x2){
-	   	 		polygons.push(rect);
-	   	 		return;
-	   	 	}
-	   	 }else{
-	   	 	for(var i = 0; i < polygons.length; i++){
-	   	       if(rect.x2 < polygons[i].x1 ){
-	   	       	    if(i === 0){
-	   	       	    	polygons.unshift(rect)
-	   	       	    	return; 
-	   	       	    }else if(rect.x1 > polygons[i - 1].x2){
-	   	       	    	polygons.splice( i , 0, rect)
-	   	       	    	return;
-	   	       	    }	   	       		
-	   	       }else {
-	   	          if(rect.x1 > polygons[polygons.length - 1].x2){
-	   	          	polygons.push(rect)
-	   	          	return;
-	   	          }
-	   	       }
-	   	   }
-	   	 }	   	   
-	   }
-	}
-	// 更新橡皮框
-	function updateRubberband(loc) {
-	   drawRubberbandShape(loc);
-	}
 	// 矩形绘制
 	function drawRect(rect){
-		rect.createPath();
-		rect.stroke();
-		rect.fill();
+		rect.createScalePath();
+		rect.scaleStroke();
+		rect.scaleFill();
 	}
 	// 绘制全部矩形
 	function drawRects(){
@@ -385,230 +351,6 @@ controls.init();
 			drawRect(polygon);
 		});
 	}
-	// 绘图状态开始拖动/鼠标按下
-	function startDragging(loc){
-		surfaceData = util.saveDrawingSurface(audio_rect);
-		mousedown.x = loc.x;
-		mousedown.y = 0;
-	}
-	// 开始编辑
-	function startEditing(canvas){
-		canvas.style.cursor = 'pointer';
-		editing = true;
-	}
-	// 结束编辑
-	function endEditing(canvas){
-		editing = false
-	}
-
-	
-	var util = new Util();
-	// mousedown
-	audio_rect.addEventListener('mousedown', function(e){
-		e.stopPropagation();
-		e.preventDefault();
-	    if (audio.src === '') {
-	      alert('请选择音频文件。。。');
-
-	      return; 
-	    }
-		var loc = util.windowToCanvas(audio_rect, e.clientX,e.clientY);
-	    if(loc.x < coordOffsetX) return;
-	 
-			// 编辑状态
-			if(editing){
-				polygons.forEach(function(polygon){
-					polygon.createPath();
-					// 判断点是否在矩形内 
-					if(context.isPointInPath(loc.x, loc.y)){
-						if(polygon.isPointInLeft(loc)){
-							audio_rect.style.cursor = 'crosshair';
-							polygon.isInLeft = true
-						}
-						if(polygon.isPointInRight(loc)){
-							audio_rect.style.cursor = 'crosshair';
-							polygon.isInRight = true
-						}
-						// 清除
-						context.clearRect(0, 0, audio_rect.width, audio_rect.height);
-						// 将矩形设为选中状态
-						polygon.selected = true;
-						
-						rectDrag = polygon;
-
-						// 重绘矩形
-						drawRects();
-
-						// 记录开始移动的点
-						draggingStartX = loc.x;
-						return;
-					}
-				})
-			}else{  //绘图状态			
-				if(polygons.length != 0){ // 已存在矩形时
-					var flag = false
-					polygons.forEach(function(polygon){
-						polygon.createPath();
-						if(context.isPointInPath(loc.x, loc.y)){
-							flag = true
-						}
-					})
-					if(!flag){
-						startDragging(loc);
-						rectDrag = true;
-					}else{
-						
-						isInPolygons = true;
-					}
-				}else{
-					startDragging(loc);
-					rectDrag = true;
-				}			
-			}
-	})
-	// 判断点是否在矩形中
-	function pointIsInPolygons(polygons, loc){
-		for(var i = 0; i < polygons.length; i++){			
-			if(polygons[i].isPointIn(loc)){
-				return true
-			}
-		}
-		return false
-	}
-  // mousemove
-	audio_rect.addEventListener('mousemove', function(e){
-		e.stopPropagation();
-		e.preventDefault();
-		var loc = util.windowToCanvas(audio_rect, e.clientX, e.clientY);		
-		if(editing){
-			var i = 0;
-			polygons.forEach(function(polygon){
-				polygon.createPath();
-				if(context.isPointInPath(loc.x, loc.y)){
-					if(polygon.isPointInLeft(loc) || polygon.isPointInRight(loc)){
-						i = 1;
-					}
-				}
-				if(i === 1){
-					audio_rect.style.cursor = 'crosshair';
-				}else if (i === 0){
-					audio_rect.style.cursor = 'pointer';
-				}
-			})
-		} 
-		// 编辑状态
-		if(editing && rectDrag){
-			// 移动的距离
-			var deltaX = loc.x - draggingStartX;
-			draggingStartX = loc.x;
-			// 矩形在数组中的位置
-			var index = getPolygonIndex(polygons, rectDrag);
-			// 改变矩形位置
-			if(rectDrag.isInLeft){ //往左拉伸
-				if (rectDrag.x2 - rectDrag.x1 - deltaX > 10) { //宽度不小于10					
-					if(polygons[index - 1]){ //左边有矩形
-						if(rectDrag.x1 + deltaX > polygons[index - 1].x2){
-							rectDrag.changeX1(deltaX);
-						}
-					}else{ //左边没有矩形
-						if(rectDrag.x1 + deltaX >= coordOffsetX){
-							rectDrag.changeX1(deltaX);
-						}
-					}
-				}			
-			}else if(rectDrag.isInRight){  //往右拉伸
-				if(rectDrag.x2 + deltaX - rectDrag.x1 > 10){ //宽度不小于10
-					if(polygons[index + 1]){ //右边有矩形
-						if(rectDrag.x2 + deltaX < polygons[index + 1].x1){
-							rectDrag.changeX2(deltaX);
-						}
-					}else{ //右边没有矩形
-						if(rectDrag.x2 + deltaX <= audio_rect.width){
-							rectDrag.changeX2(deltaX);	
-						}
-					}
-				}				
-			}else {  //整体移动				
-				if(deltaX <= 0){
-					if(polygons[index - 1]){ //左边有矩形
-						if(rectDrag.x1 + deltaX > polygons[index -1].x2){
-							rectDrag.changePoints(deltaX);
-						}
-					}else{ //左边没有矩形
-						if(rectDrag.x1 + deltaX >= coordOffsetX){
-							rectDrag.changePoints(deltaX);
-						}
-					}
-				}else{ 
-					if(polygons[index + 1]){ //右边有矩形
-						if(rectDrag.x2 + deltaX < polygons[index + 1].x1){
-							rectDrag.changePoints(deltaX);
-						}
-					}else{ //右边没有矩形
-						if(rectDrag.x2 + deltaX <= audio_rect.width){
-							rectDrag.changePoints(deltaX);
-						}
-					}
-				}
-			}		
-			context.clearRect(0, 0, audio_rect.width, audio_rect.height);
-			// 重绘矩形
-			drawRects();
-			if(guidewires){
-				util.drawGuidewires(audio_rect, loc.x, loc.y);
-			}
-		}else{  //
-			// 绘图状态
-			if(rectDrag){
-				if(polygons.length != 0){
-					var position = getPointPosition(polygons, mousedown);
-					if(position === -1){  // 最左边
-						if(loc.x >= coordOffsetX && loc.x < polygons[0].x1){
-							util.restoreDrawingSurface( audio_rect ,surfaceData);
-							updateRubberband(loc);
-							
-							mousemovePosition.x = loc.x;
-							mousemovePosition.y = 0;
-							if(guidewires){
-								util.drawGuidewires(audio_rect, loc.x, loc.y);
-							}	
-						}
-					}else if(position === - 2){  //最右边
-						if(loc.x > polygons[polygons.length - 1].x2 && loc.x < audio_rect.width){
-							util.restoreDrawingSurface( audio_rect ,surfaceData);
-							updateRubberband(loc);
-							
-							mousemovePosition.x = loc.x;
-							mousemovePosition.y = 0;
-							if(guidewires){
-								util.drawGuidewires(audio_rect, loc.x, loc.y);
-							}	
-						}
-					}else {  //两个矩形之间
-						if(loc.x > polygons[position].x2 && loc.x < polygons[position + 1].x1){
-							util.restoreDrawingSurface( audio_rect ,surfaceData);
-							updateRubberband(loc);
-
-							mousemovePosition.x = loc.x;
-							mousemovePosition.y = 0;
-							if(guidewires){
-								util.drawGuidewires(audio_rect, loc.x, loc.y);
-							}	
-						}
-					}
-				}else{
-					util.restoreDrawingSurface( audio_rect ,surfaceData);
-					updateRubberband(loc);
-
-					mousemovePosition.x = loc.x;
-
-					if(guidewires){
-						util.drawGuidewires(audio_rect, loc.x, loc.y);
-					}	
-				}							
-			}
-		}		
-	})
 	function getPointPosition(polygons, mousedown){
 		if(mousedown.x < polygons[0].x1){
 			return -1;
@@ -629,74 +371,6 @@ controls.init();
 			}
 		}
 	}
-  // mouseup
-	audio_rect.addEventListener('mouseup', function(e){
-		e.stopPropagation();
-		e.preventDefault();
-
-		var loc = util.windowToCanvas(audio_rect, e.clientX, e.clientY);
-
-	    if (loc.x < coordOffsetX) return;
-			rectDrag = false;
-
-			if(editing){
-				polygons.forEach(function(polygon){
-					polygon.createPath();
-					if(context.isPointInPath(loc.x, loc.y)){
-						context.clearRect(0, 0, audio_rect.width, audio_rect.height);					
-						polygon.selected = false;
-						polygon.isInLeft = false;
-						polygon.isInRight = false;					
-						drawRects();
-
-			            controls.updateList();
-			          
-			            judge_start_time.innerText = polygon.stringifyStartTime;
-			            judge_end_time.innerText = polygon.stringifyEndTime;
-
-			            editingPloygon = polygon;
-						return;
-					}
-				})
-			}else{	
-				if(!isInPolygons){
-					if(mousemovePosition.x != loc.x){
-						loc.x = mousemovePosition.x;
-					}
-					util.restoreDrawingSurface(audio_rect, surfaceData);
-					updateRubberband(loc);
-	        		controls.updateList();
-	        		return;
-				}else{
-					isInPolygons = false;
-	        		return;
-				}						
-		}
-	})
-
-	// checkbox change
-	edit_checkbox.addEventListener('change', function(e){
-		e.stopPropagation();
-		e.preventDefault();
-
-		if(editCheckbox.checked){
-			startEditing(audio_rect);			
-		}else{
-			endEditing(audio_rect);
-		}
-	})
-
-  document.addEventListener('keydown', function(e){
-    if(e.keyCode === 69){
-      startEditing(audio_rect);
-    }
-  })
-
-  document.addEventListener('keyup', function(e){
-    if(e.keyCode === 69){
-      endEditing(audio_rect)
-    }
-  })
   // btn a
 	judge_type_a.addEventListener('click', function(e){
 	  e.stopPropagation();
@@ -707,9 +381,9 @@ controls.init();
 	  removeClass(judge_type_b, 'judge_wrap_type_selected');
 	  removeClass(judge_type_ab, 'judge_wrap_type_selected');
 
-      $('#judge_input_area input').val('');
+	  $('#judge_input_area input').val('');
 
-      selectedType = 'A';
+	  selectedType = 'A';
 
 	  // switch panel
 	  judge_text_a.style.display = 'block';
@@ -743,32 +417,31 @@ controls.init();
 	  removeClass(judge_type_a, 'judge_wrap_type_selected');
 	  removeClass(judge_type_b, 'judge_wrap_type_selected');
 
-      $('#judge_input_area input').val('');
+	    $('#judge_input_area input').val('');
 
-      selectedType = 'AB';
+	    selectedType = 'AB';
 
-      judge_text_a.style.display = 'none';	  
+	    judge_text_a.style.display = 'none';	  
 	  judge_text_b.style.display = 'none';
 	  judge_text_ab.style.display = 'block';
 	})
- 
-
+  // btn play
 	judge_play.addEventListener('click', function(e){
-	      e.stopPropagation();
-	      e.preventDefault();
+	    e.stopPropagation();
+	    e.preventDefault();
 
-	      // 判断一段话是否结束
-	      var palayInterval;
-	      clearInterval(palayInterval)
-	      if(editingPloygon){
+	    // 判断一段话是否结束
+	    var palayInterval;
+	    clearInterval(palayInterval)
+	    if(editingPloygon){
 
-		      var start = editingPloygon.startTime;
-		      var end = editingPloygon.endTime;
-		      var duration = end - start;
-		      
-		      if(!playFlag){
-		         audio.currentTime = editingPloygon.startTime
-		      }
+	      var start = editingPloygon.startTime;
+	      var end = editingPloygon.endTime;
+	      var duration = end - start;
+	      
+	      if(!playFlag){
+	         audio.currentTime = editingPloygon.startTime
+	      }
 
 	      if(audio.paused){      
 	        audio.play();
@@ -786,10 +459,10 @@ controls.init();
 	          clearInterval(palayInterval);
 	        }
 	      }, 50)
-	  }
+	  	}
 	}) 
 	
-
+ 
   // 检测class
 	function hasClass(ele, cls){
 	  return ele.className.match(new RegExp('(\\s|^)' + cls + '(\\s|$)'));
@@ -805,87 +478,16 @@ controls.init();
 	  	ele.className = ele.className.replace(reg, '');
 	  }
 	}
-    
- 
-
-  play.addEventListener('click', function(e){
-    e.stopPropagation();
-    e.preventDefault();
-    
-    if( audio.paused ) {
-    	audio.play();
-
-      clearInterval(currentTimeFlag);
-      // 游标
-      var drawVernier = new DrawVernier(coordOffsetX, coordOffsetY, coordOffsetY - 60, audio_bg)
-      drawVernier.paint()
-      var startTime = 0 //记录开始播放时间
-      currentTimeFlag = setInterval(function(){
-
-        bg_context.clearRect(0, 0, audio_bg.width, audio_bg.height);
-        util.restoreDrawingSurface(audio_bg, beforeVernierData);
-        if(audio.currentTime === audio.allTime){
-          clearInterval(currentTimeFlag);          
-          drawVernier.paint();
-          return;
-        } 
-        var deltaTime = audio.currentTime - startTime;
-        startTime = audio.currentTime;     
-        drawVernier.x = drawVernier.x + deltaTime * timeRate; 
-        drawVernier.paint();
-      },20)
-    }
-    
-    
-  })
-  pause.addEventListener('click', function(e){
-    e.stopPropagation();
-    e.preventDefault();
-    
-    if( !audio.paused ) {
-    	audio.pause();
-      clearInterval(currentTimeFlag);
-    }
-  })
-  restart.addEventListener('click', function(e){
-    e.stopPropagation();
-    e.preventDefault();
-
-    clearInterval(currentTimeFlag);
-    
-    audio.currentTime = 0;
-    if(audio.paused){
-      audio.play();
-    }
-    var drawVernier = new DrawVernier(coordOffsetX, coordOffsetY, coordOffsetY - 60, audio_bg)
-    drawVernier.paint()
-    var startTime = 0 //记录开始播放时间
-    currentTimeFlag = setInterval(function(){
-      bg_context.clearRect(0, 0, audio_bg.width, audio_bg.height);
-      util.restoreDrawingSurface(audio_bg, beforeVernierData);
-      if(audio.currentTime === audio.allTime){
-        clearInterval(currentTimeFlag);          
-        drawVernier.paint();
-        return;
-      } 
-      var deltaTime = audio.currentTime - startTime;
-      startTime = audio.currentTime;     
-      drawVernier.x = drawVernier.x + deltaTime * timeRate; 
-      drawVernier.paint();
-    },20)
-  })
-  
 	function select(id){
 	  return document.getElementById(id)
 	}
   // 文件控件
   file_input.addEventListener('change',function(e){
-    e.preventDefault;
-    e.stopPropagation;
-    fileIdx = 0;
-    loadData();  
-  })
-
+	    e.preventDefault;
+	    e.stopPropagation;
+	    fileIdx = 0;
+	    loadData();  
+  })  
   function loadData(order=1) {
       if (file_input.files.length === 0) return;
       var fileName = file_input.files[fileIdx].name;
@@ -902,207 +504,540 @@ controls.init();
           
       }
       var wf = new WavFile(file_input.files[fileIdx]);
-      wf.onload(function() { 
-
-          console.log('wf.onload');         
-          // 重置状态
-          clearInterval(currentTimeFlag);  
-          context.rect(0, 0, audio_rect.width, audio.height);
+      wf.onload(function() {        
+          // 重置状态  
           if(polygons.length){
             polygons = [];
             view.renderBarAfterDel();
             view.renderReaultList();
           }    
-          var data = wf.getData();            
+          data = wf.getData();            
           var time = wf.getTime();
           var frequency = wf.getFrequency();
-
           // 设置audio的src和总时长
           audio.src = file_input.files[fileIdx].name;
           audio.allTime = time;
+          
+          // if(time <= 60 && time > 0){
+          //   timeRate = 100;
+          // }else if(time > 60){
+          //   timeRate = 10;
+          // }
 
-          if(time <= 60 && time > 0){
-            timeRate = 100;
-          }else if(time > 60){
-            timeRate = 10;
-          }
-
-          console.log(data);
-          console.log(data.length);
-
+          timeRate = 200 / parseInt(time / 60 + 1);
+          console.log('时长比 ：')
           console.log(time);
-          console.log(frequency);
-          console.log(time * frequency);
-          // selectData
-          console.log('selectData');
-
-          var changedData = selectData(data, time, frequency, timeRate, audio.height / 2);
+          console.log(time / 60 + 1);
+          console.log(timeRate); 
 
           // 刷选音频数据
-          // var changedData = changeData(data, time, frequency, timeRate, audio_bg.height / 2);
-
+          // changedData = changeData(data, time, frequency, timeRate, audio_bg.height / 2);
+          changedData = selectData(data, time, frequency, timeRate, audio_bg.height /2);
           // 音频宽度
-          audioWaveWidth = time * timeRate ;
-
-          rightBoundary = audioWaveWidth + coordOffsetX;
-
-          
-
+          audioWaveWidth = time * timeRate ;         
           // 背景层canvas宽度
           audio_bg.width = Math.round(time + 1) * timeRate > 800 ? Math.round(time + 1) * timeRate : 800;
-
-          // 操作层canvas宽度
-          audio_rect.width = rightBoundary;
-
           // 背景网格
           var gridWidth = 70;
           var griHeight = 20;
           var drawBcakgrounGrid = new DrawBcakgrounGrid(audio_bg, gridWidth, griHeight);
           drawBcakgrounGrid.paint();        
           // 音频信号
-          console.log('原点Y');
-          console.log(coordOffsetY)
           var drawLine = new DrawLine(audio_bg, changedData, coordOffsetX, coordOffsetY);
           drawLine.paint(); 
           // 坐标轴
           var drawCoord = new DrawCoord(audio_bg, coordOffsetX, coordOffsetY, timeRate);
           drawCoord.paint();
-          beforeVernierData = util.saveDrawingSurface(audio_bg);                  
+              
+          initBgCanvasWidth = audio_bg.width;
       });
   }
-  // wav文件
-  WavFile = function(filePath) {
-      this.path = filePath;
-      this.rawBinString;
-      this.shortArray;
-      this.loaded = false;
-      this.loadCallback = null;
-      this.frequency;
-      this.dataLength;
-      this.time;
-      this.load();
-  }
-  WavFile.prototype = {
-      load: function() {
-          var reader = new FileReader();
-          var that = this;
-          reader.onload = function(e) {
-              let head = 78;
-              that.rawBinString = e.target.result;
-              that.frequency = that.char2long(that.rawBinString, 24);
-              that.dataLength = that.char2long(that.rawBinString, 74) / 2;
-              that.shortArray = that.byteString2shortArray(that.rawBinString.slice(head));
-              that.time = that.dataLength / that.frequency;
-              if (that.loadCallback != null) {
-                  that.loadCallback();
-              }
-              that.loaded = true;
-          }
-          reader.readAsBinaryString(this.path);
-      },
-      onload: function(callback) {
-          this.loadCallback = callback;
-          if (this.loaded) {
-              callback();
-          }
-      },
-      getFrequency: function() {
-          return this.frequency;
-      },
-      getTime: function() {
-          return this.time;
-      },
-      getData: function() {
-          return this.shortArray;
-      },
-      char2short: function(c1, c2) {
-          let s = c2 * 256 + c1;
-          return s > 32767 ? s - 65536 : s;
-      },
-      char2long: function(byteString, startChar) {
-          return byteString.charCodeAt(startChar+3) * 16777216 + byteString.charCodeAt(startChar+2) * 65536
-                  + byteString.charCodeAt(startChar+1) * 256 + byteString.charCodeAt(startChar);
-      },
-      byteString2shortArray: function(bs) {
-          let len = bs.length / 2;
-          sa = new Array(len);
-          for (var i = 0; i < len; i++) {
-              sa[i] = this.char2short(bs.charCodeAt(i*2), bs.charCodeAt(i*2+1));
-          }
-          return sa;
+  audio_bg.addEventListener('mousewheel', bgMouseWheel, false)
+  function bgMouseWheel(e){
+	  	e.stopPropagation();
+	  	e.preventDefault();
+
+      if (!data) return;
+
+	  	var loc = util.windowToCanvas(audio_bg, e.clientX, e.clientY);
+
+	  	// 滚动一次缩放比例
+	    var rate = e.wheelDelta / 120 / 10;
+	    // 累计缩放比例
+	    initRate = rate + initRate
+	    if(initRate > 2){
+	    	initRate = initRate - rate;
+	    	return;
+	    }else if(initRate < 0.2){
+	    	initRate = initRate - rate;
+	    	return;
+	    }
+	    var scaleWidth =  initBgCanvasWidth * initRate;
+
+	    if(scaleWidth < startBgCanvasWidth ){
+	    	audio_bg.width = startBgCanvasWidth;
+	    }else{
+	    	audio_bg.width = scaleWidth;
+	    }
+
+	    bg_context.clearRect(0, 0, audio_bg.width, audio_bg.height);
+       // 背景网格
+      var gridWidth = 70;
+      var griHeight = 20;
+      var drawBcakgrounGrid = new DrawBcakgrounGrid(audio_bg, gridWidth * initRate , griHeight);
+      drawBcakgrounGrid.paint();        
+      // 音频信号
+      var drawLine = new DrawLine(audio_bg, changedData, coordOffsetX, coordOffsetY, initRate);
+      drawLine.paint(); 
+      // 坐标轴
+      var drawCoord = new DrawCoord(audio_bg, coordOffsetX, coordOffsetY, timeRate * initRate);
+      drawCoord.paint();
+
+      for(var i = 0; i < polygons.length; i++){
+        polygons[i].changeScaleState(initRate);
+        polygons[i].createScalePath();
+        polygons[i].scaleStroke();
+        polygons[i].scaleFill();
       }
-  }  
+  }
+  audio_bg.addEventListener('DOMMouseScroll', bgDOMMouseScroll, false)
+  function bgDOMMouseScroll(e){
+    e.stopPropagation();
+    e.preventDefault();
+
+    if(!data) return;
+
+    var loc = util.windowToCanvas(audio_bg, e.clientX, e.clientY);
+
+    // 滚动一次缩放比例
+    var rate = - e.detail / 10;
+    // 累计缩放比例
+    initRate = rate + initRate
+    if(initRate > 2){
+      initRate = initRate - rate;
+      return;
+    }else if(initRate < 0.5){
+      initRate = initRate - rate;
+      return;
+    }
+
+    var scaleWidth =  initBgCanvasWidth * initRate;
+
+    if(scaleWidth < startBgCanvasWidth ){
+      audio_bg.width = startBgCanvasWidth;
+    }else{
+      audio_bg.width = scaleWidth;
+    }
+
+    bg_context.clearRect(0, 0, audio_bg.width, audio_bg.height);
+     // 背景网格
+    var gridWidth = 70;
+    var griHeight = 20;
+    var drawBcakgrounGrid = new DrawBcakgrounGrid(audio_bg, gridWidth * initRate , griHeight);
+    drawBcakgrounGrid.paint();        
+    // 音频信号
+    var drawLine = new DrawLine(audio_bg, changedData, coordOffsetX, coordOffsetY, initRate);
+    drawLine.paint(); 
+    // 坐标轴
+    var drawCoord = new DrawCoord(audio_bg, coordOffsetX, coordOffsetY, timeRate * initRate);
+    drawCoord.paint();
+
+    for(var i = 0; i < polygons.length; i++){
+      polygons[i].changeScaleState(initRate);
+      polygons[i].createScalePath();
+      polygons[i].scaleStroke();
+      polygons[i].scaleFill();
+    }
+  }
+  audio_bg.addEventListener('mousedown', bgMousedown, false)
+  function bgMousedown(e){
+  	e.stopPropagation();
+  	e.preventDefault();
+  	if(audio.src === ''){
+  		alert('请选择音频文件。。。');
+  		return;
+  	}
+  	var loc = util.windowToCanvas(audio_bg, e.clientX, e.clientY);
+  	loc.x = (loc.x - coordOffsetX) /initRate + coordOffsetX;
+  	
+    console.log(polygons);
+    console.log(loc);
+
+  	if(polygons.length){
+  		if(pointIsInPolygons(polygons, loc)){
+  			editing = true;
+  			polygons.forEach(function(polygon){
+  				polygon.createPath();
+  				if(bg_context.isPointInPath(loc.x, loc.y)){
+  					audio_bg.style.cursor = 'pointer';
+  					if(polygon.isPointInLeft(loc)){
+  						audio_bg.style.cursor = 'w-resize';
+  						polygon.isInLeft = true
+  					}else if(polygon.isPointInRight(loc)){
+  						audio_bg.style.cursor = 'e-resize';
+  						polygon.isInRight = true;
+  					}
+  					polygon.selected = true;
+  					polygon.scaleFill();
+  					rectDrag = polygon;
+  					draggingStartX = loc.x;
+  					return 
+  				}
+  			})
+  		}else{
+        if(loc.x < coordOffsetX) return;
+  			bgStartDragging(loc);
+  			rectDrag = true;
+  		}
+  	}else{
+  		if(loc.x < coordOffsetX) return;
+  		bgStartDragging(loc);
+  		rectDrag = true;
+  	}
+  }
+  // 判断点是否在矩形中
+	function pointIsInPolygons(polygons, loc){
+		for(var i = 0; i < polygons.length; i++){			
+			if(polygons[i].isPointIn(loc)){
+				return true
+			}
+		}
+		return false
+	}
+  function bgStartDragging(loc){
+  	surfaceData = util.saveDrawingSurface(audio_bg);
+  	mousedown.x = loc.x;
+  	mousedown.y = 0;
+  }
+  audio_bg.addEventListener('mousemove', bgMousemove, false); 
+  function bgMousemove(e){
+	  	e.stopPropagation();
+	  	e.preventDefault();
+	  	var loc = util.windowToCanvas(audio_bg, e.clientX, e.clientY);
+	  	loc.x = (loc.x - coordOffsetX) /initRate + coordOffsetX;
+      audio_bg.style.cursor = 'default';
+
+     
+	  	if(polygons.length){
+	  		if(pointIsInPolygons(polygons, loc)){
+	  			polygons.forEach(function(polygon){
+	  				polygon.createPath();
+	  				if(bg_context.isPointInPath(loc.x, loc.y)){
+	  					audio_bg.style.cursor = 'pointer';
+	  					if(polygon.isPointInLeft(loc)){
+	  						audio_bg.style.cursor = 'w-resize';
+	  					}
+	  					if(polygon.isPointInRight(loc)){
+	  						audio_bg.style.cursor = 'e-resize';
+	  					}
+	  				}
+	  			})
+	  		}
+	  	}
+	  	if(editing && rectDrag){
+	  		var deltaX = loc.x - draggingStartX;
+	  		draggingStartX = loc.x;
+
+	  		var index = getPolygonIndex(polygons, rectDrag);
+	  		if(rectDrag.isInLeft){ //左移
+	  			if(rectDrag.x2 - rectDrag.x1 - deltaX > 10){
+	  				if(polygons[index - 1]){
+	  					if(rectDrag.x1 + deltaX > polygons[index - 1].x2){
+	  						rectDrag.changeX1(deltaX);
+	  						rectDrag.changeScaleX1(deltaX, initRate);
+	  					}
+	  				}else { 
+	  					if(rectDrag.x1 + deltaX >= coordOffsetX){
+	  						rectDrag.changeX1(deltaX);
+	  						rectDrag.changeScaleX1(deltaX, initRate);
+	  					}
+	  				}
+	  			}
+	  		}else if(rectDrag.isInRight){ //右移
+	  			if(rectDrag.x2 + deltaX - rectDrag.x1 > 10){
+	  				if(polygons[index + 1]){
+	  					if(rectDrag.x2 + deltaX < polygons[index + 1].x1){
+	  						rectDrag.changeX2(deltaX);
+	  						rectDrag.changeScaleX2(deltaX, initRate);
+	  					}
+	  				}else{
+	  					if(rectDrag.x2 + deltaX <= initBgCanvasWidth){
+	  						rectDrag.changeX2(deltaX);
+	  						rectDrag.changeScaleX2(deltaX, initRate);
+	  					}
+	  				}
+	  			}
+	  		}else{ //整体
+	  			if(deltaX <= 0){
+	  				if(polygons[index - 1]){ //左有
+	  					if(rectDrag.x1 + deltaX > polygons[index -1].x2){
+	  						rectDrag.changePoints(deltaX);
+	  						rectDrag.changeScalePoints(initRate);
+	  					}
+	  				}else{ //左无
+	  					if(rectDrag.x1 + deltaX >= coordOffsetX){
+	  						rectDrag.changePoints(deltaX);
+	  						rectDrag.changeScalePoints(initRate);
+	  					}
+	  				}
+	  			}else{
+	  				if(polygons[index + 1]){//右有
+	  					if(rectDrag.x2 +deltaX < polygons[index + 1].x1){
+	  						rectDrag.changePoints(deltaX);
+	  						rectDrag.changeScalePoints(initRate);
+	  					}
+	  				}else{
+	  					if(rectDrag.x2 + deltaX <= initBgCanvasWidth){
+	  						rectDrag.changePoints(deltaX);
+	  						rectDrag.changeScalePoints(initRate);
+	  					}
+	  				}
+	  			}
+	  		}
+	  		bg_context.clearRect(0, 0, audio_bg.width, audio_bg.height);
+		  	var gridWidth = 70;
+			  var griHeight = 20;
+			  var drawBcakgrounGrid = new DrawBcakgrounGrid(audio_bg, gridWidth * initRate , griHeight);
+			  drawBcakgrounGrid.paint();        
+			  // 音频信号
+			  var drawLine = new DrawLine(audio_bg, changedData, coordOffsetX, coordOffsetY, initRate);
+			  drawLine.paint(); 
+			  // 坐标轴
+			  var drawCoord = new DrawCoord(audio_bg, coordOffsetX, coordOffsetY, timeRate * initRate);
+			  drawCoord.paint();
+
+			  drawRects();
+			  if(guidewires){
+				  util.drawGuidewires(audio_bg, (loc.x - coordOffsetX) * initRate + coordOffsetX, loc.y);
+			  }
+	  	}else{
+	  		if(rectDrag){
+           // mousedown状态 移出到最右边
+          if(loc.x < coordOffsetX){
+              util.restoreDrawingSurface(audio_bg, surfaceData);
+              mousedown.x = null;
+              rectDrag = false;
+             return;
+          }
+	  		  if(polygons.length != 0){
+					var position = getPointPosition(polygons, mousedown);
+
+          console.log(position)
+
+					if(position === -1){  // 最左边
+						if(loc.x >= coordOffsetX && loc.x <= polygons[0].x1){
+							util.restoreDrawingSurface( audio_bg ,surfaceData);
+							bgDrawRubberband(loc);
+							
+              mousemoveFlag = true;
+							mousemoveEndPosition.x = loc.x;
+							mousemoveEndPosition.y = 0;
+							if(guidewires){
+								util.drawGuidewires(audio_bg, (loc.x - coordOffsetX) * initRate + coordOffsetX, loc.y);
+							}	
+						}
+					}else if(position === - 2){  //最右边
+            console.log(audio_bg.width);
+
+            console.log(loc)
+						if(loc.x >= polygons[polygons.length - 1].x2 && loc.x <= initBgCanvasWidth){
+              console.log(loc)
+             
+
+							util.restoreDrawingSurface( audio_bg ,surfaceData);
+							bgDrawRubberband(loc);
+							
+              mousemoveFlag = true;
+							mousemoveEndPosition.x = loc.x;
+							mousemoveEndPosition.y = 0;
+							if(guidewires){
+								util.drawGuidewires(audio_bg, (loc.x - coordOffsetX) * initRate + coordOffsetX, loc.y);
+							}	
+						}
+					}else {  //两个矩形之间
+						if(loc.x >= polygons[position].x2 && loc.x <= polygons[position + 1].x1){
+							util.restoreDrawingSurface( audio_bg ,surfaceData);
+							bgDrawRubberband(loc);
+
+              mousemoveFlag = true;
+							mousemoveEndPosition.x = loc.x;
+							mousemoveEndPosition.y = 0;
+							if(guidewires){
+								util.drawGuidewires(audio_bg, (loc.x - coordOffsetX) * initRate + coordOffsetX, loc.y);
+							}	
+						}
+					}
+				}else{
+					    util.restoreDrawingSurface(audio_bg, surfaceData);
+				  	  bgDrawRubberband(loc);
+				  	  if(guidewires){
+				  		  util.drawGuidewires(audio_bg, (loc.x - coordOffsetX) * initRate + coordOffsetX, loc.y);
+				  	  }
+				  }				  	  
+		  	}
+	  	}  	
+  }
+  audio_bg.addEventListener('mouseout', bgMouseout, false);
+  function bgMouseout(e){
+  	e.stopPropagation();
+  	e.preventDefault();
+  }
+  function bgDrawRubberband(loc){
+  		
+  		if(mousedown.x > loc.x){
+  			var x = loc.x;
+  			loc.x = mousedown.x;
+  			mousedown.x = x;
+  		}	  	
+	  	var rect = new DrawRect(mousedown.x, mousedown.y, loc.x, audio_bg.height, audio_bg, coordOffsetX, timeRate, initRate);
+	  	drawRect(rect); 
+	  	if(!rectDrag){
+	  	   judge_start_time.innerText = rect.stringifyStartTime;
+	       judge_end_time.innerText = rect.stringifyEndTime;
+
+	       editingPloygon = rect;
+
+		   	 if(polygons.length == 0){
+		   	 	polygons.push(rect);
+		   	 	return;
+		   	 }else if(polygons.length == 1){
+		   	 	if(rect.x2 <= polygons[0].x1){
+		   	 		polygons.unshift(rect);
+		   	 		return;
+		   	 	}else if(rect.x1 >= polygons[0].x2){
+		   	 		polygons.push(rect);
+		   	 		return;
+		   	 	}
+		   	 }else{
+		   	 	for(var i = 0; i < polygons.length; i++){
+		   	       if(rect.x2 <= polygons[i].x1 ){
+		   	       	    if(i === 0){
+		   	       	    	polygons.unshift(rect)
+		   	       	    	return; 
+		   	       	    }else if(rect.x1 >= polygons[i - 1].x2){
+		   	       	    	polygons.splice( i , 0, rect)
+		   	       	    	return;
+		   	       	    }	   	       		
+		   	       }else {
+		   	          if(rect.x1 >= polygons[polygons.length - 1].x2){
+		   	          	polygons.push(rect)
+		   	          	return;
+		   	          }
+		   	       }
+		   	   }
+		   	}	   	   
+	   }
+	}
+  audio_bg.addEventListener('mouseup', bgMouseup, false);
+  function bgMouseup(e){
+  	e.stopPropagation();
+  	e.preventDefault();
+  	// audio_bg.style.cursor = 'default';
+  	var loc = util.windowToCanvas(audio_bg, e.clientX, e.clientY);
+  	loc.x = (loc.x - coordOffsetX) /initRate + coordOffsetX;
+  	if(loc.x < coordOffsetX) return;
+  	rectDrag = false;
+
+    console.log(polygons);
+    console.log(loc);
+  	
+    if(editing){
+  		polygons.forEach(function(polygon){
+  				polygon.createPath();
+  				if(bg_context.isPointInPath(loc.x, loc.y)){
+  					bg_context.clearRect(0, 0, audio_bg.width, audio_bg.height);					
+  					polygon.selected = false;
+  					polygon.isInLeft = false;
+  					polygon.isInRight = false;					 					
+            bg_context.clearRect(0, 0, audio_bg.width, audio_bg.height);
+             // 背景网格
+            var gridWidth = 70;
+            var griHeight = 20;
+            var drawBcakgrounGrid = new DrawBcakgrounGrid(audio_bg, gridWidth * initRate , griHeight);
+            drawBcakgrounGrid.paint();        
+            // 音频信号
+            var drawLine = new DrawLine(audio_bg, changedData, coordOffsetX, coordOffsetY, initRate);
+            drawLine.paint(); 
+            // 坐标轴
+            var drawCoord = new DrawCoord(audio_bg, coordOffsetX, coordOffsetY, timeRate * initRate);
+            drawCoord.paint();
+            for(var i = 0; i < polygons.length; i++){
+              polygons[i].changeScaleState(initRate);
+              polygons[i].createScalePath();
+              polygons[i].scaleStroke();
+              polygons[i].scaleFill();
+            }
+  		      controls.updateList();  		          
+  		      judge_start_time.innerText = polygon.stringifyStartTime;
+  		      judge_end_time.innerText = polygon.stringifyEndTime;
+  		      editingPloygon = polygon;
+            editing = false;
+  					return;
+  				}
+  		})
+  	}else{
+
+      console.log(mousedown.x);
+
+      if(mousemoveFlag && pointIsInPolygons(polygons, loc)){
+        loc.x = mousemoveEndPosition.x;
+      }
+      if(mousedown.x){
+        util.restoreDrawingSurface(audio_bg, surfaceData);
+        if(Math.abs(mousedown.x - loc.x) < 10) return;
+        bgDrawRubberband(loc);
+        controls.updateList();
+        mousedown.x = null;
+        mousedown.y = null;
+        return;
+      }		
+  	} 	
+  } 
   // data 音频数组
   // time 时长
   // frequency 码率
   // with 每秒对应长度
   // height y轴坐标高度
-  
-  function changeData(data, time, frequency, width, height){
-  	var selectWidth = Math.floor(frequency / width);
-  	var selectedData = [];
-    // 筛选数组数据
-  	for(var i = 0; i < data.length; i++){	
-  		if((i % selectWidth) == 0){
-  			selectedData.push(data[i])
-  		}
-  	}	
-    // 改变数组数据值
-  	for(var j = 0; j < selectedData.length; j++){
-  		if(Math.abs(selectedData[j]) * 0.1 > height){
-  			if(Math.abs(selectedData[j]) / selectedData[j] > 0){
-					selectedData[j] = (Math.abs(selectedData[j]) / selectedData[j]) * height - 30 + 30 * Math.random();
-  			}else{
-    			  	selectedData[j] = (Math.abs(selectedData[j]) / selectedData[j]) * height + 30 - 30 * Math.random();
-    			}
-  		}else{
-  			selectedData[j] = parseInt(selectedData[j] * 0.1);
-  		}	
-  	}
-    // 返回过滤后的数组
-  	return selectedData;
-  }
-
   function selectData(data, time, frequency, width, height){
-  	var selectWidth = Math.floor(frequency / width);
-  	var selectData = [];
-  	// 
-  	var num = Math.floor(time  *  width);
+	  	
+      var selectWidth = Math.floor(frequency / width);
+	  	var selectData = [];
 
-  	for(var i = 0 ; i < num; i++){
-  		var sum = 0;
-  		var sum1 = 0;
-  		var sum2 = 0;
+	  	var num = Math.floor(time  *  width);
+      
+      for(var i = 0; i < num; i++){
+        var sum1 = 0;
+        var sum2 = 0;
+        var index1 = 0;
+        var index2 = 0;
+        var item = [];
+        for(var k = 0; k < selectWidth; k++){
+          if(data[i*selectWidth + k] >= 0){
+            index1++;
+            sum1 = data[i*selectWidth + k] + sum1;
+          }else{
+            index2++;
+            sum2 = data[i*selectWidth + k] + sum2;
+          }
+        }
+        item.push(Math.floor(sum1/index1));
+        item.push(Math.floor(sum2/index2));
 
-  		for(var j = 0; j < selectWidth; j++){
-  			if(data[i + j] >= 0){
-  				sum1 = sum1 + data[i + j];
-  			}
-  			if(data[i + j] < 0){
-  				sum2 = sum2 + data[i + j];
-  			}
-
-  			sum = sum + data[i + j]; 
-  		}
-  		var avg = Math.round(sum / selectWidth);
-
-  		console.log("sum and avg:" + i);
-  		console.log(sum1);
-  		console.log(sum2);
-  		console.log(sum);
-  		console.log(selectWidth);
-  		console.log(avg);
-  		selectData.push(avg);
-  	}
-
-  	for(var k = 0; k < selectData.length; k++){
-  		if(selectData[k] > height ){
-  			selectData[k] = height
-  		}
-  	}
-  	return selectData;
-  }
-
-
-
+        selectData.push(item);
+      }
+      var max = 0;
+      for(var j = 0; j < selectData.length; j++){
+        if(selectData[j][0] > max){
+          max = selectData[j][0] 
+        }
+        if(Math.abs(selectData[j][1]) > max){
+          max = Math.abs(selectData[j][1]);
+        }
+      }
+      for(var k = 0; k < selectData.length; k++){
+        selectData[k][0] = (selectData[k][0] / max) * height;        
+        selectData[k][1] = (selectData[k][1] / max) * height;
+      }
+	  	return selectData;
+	}
 }
